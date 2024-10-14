@@ -1,70 +1,152 @@
-# Getting Started with Create React App
+Exelaki Frontend
+================
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Overview
+--------
 
-## Available Scripts
+This is the frontend codebase for the Exelaki budgeting application. It provides a user-friendly interface for users to manage their budgets, add income and expenses, and monitor their financial progress. The frontend is developed using React and TypeScript, with additional tools for state management and API interactions.
 
-In the project directory, you can run:
+Prerequisites
+-------------
+
+To run the project, ensure you have the following installed:
+
+-   Node.js (v16.x or higher)
+
+-   npm or Yarn as the package manager
+
+Installation
+------------
+
+### Clone the repository:
+
+```
+git clone <repository-url>
+cd exelaki-frontend
+```
+
+### Install the dependencies:
+
+```
+npm install
+# or
+yarn install
+```
+
+Running the Development Server
+------------------------------
+
+To start the development server, run the following command:
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+or
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### `yarn start`
 
-### `npm test`
+The application should be available at `http://localhost:3000`.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Project Structure
+-----------------
+
+-   `**src/components**`: Contains reusable UI components, including forms for adding entries, tables, headers, etc.
+
+-   `**src/pages**`: Includes page components, such as the login, signup, dashboard, and welcome pages.
+
+-   `**src/contexts**`: Context API files for managing authentication (`AuthContext`) and budget data (`BudgetContext`).
+
+-   `**src/hooks**`: Custom hooks that encapsulate reusable logic.
+
+-   `**src/services**`: Functions to interact with the backend API (`authService`, `dashBoardService`).
+
+-   `**src/types**`: TypeScript type definitions for type safety across the application.
+
+-   `**src/utils**`: Utility functions for validation and token management.
+
+-   `**src/styles**`: Application stylesheets.
+
+Authentication Flow
+-------------------
+
+The app implements an authentication mechanism using access tokens.
+
+-   Users login or signup to obtain an access token, which is stored in `localStorage`.
+
+-   `**AuthContext**` manages the authentication state (`isAuthenticated`) and provides login/logout methods to components.
+
+-   Tokens are used for secure communication with the backend API.
+
+Available Scripts
+-----------------
+
+### `npm start`
+
+Runs the app in the development mode.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Builds the app for production.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### `npm test`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Launches the test runner.
 
-### `npm run eject`
+Environment Variables
+---------------------
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Create a `.env` file in the root directory and configure the following environment variables:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+REACT_APP_API_URL=http://localhost:5000/api
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+This environment variable is used to point the frontend to the backend API.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Dependencies
+------------
 
-## Learn More
+-   **React**: A JavaScript library for building user interfaces.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+-   **React Router**: Used for handling routing/navigation within the app.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+-   **Axios**: For making API requests.
 
-### Code Splitting
+-   **Tailwind CSS**: A utility-first CSS framework for styling.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Important Files
+---------------
 
-### Analyzing the Bundle Size
+-   `**src/index.tsx**`: The entry point for the React application.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+-   `**src/App.tsx**`: Contains the main routing logic for the application.
 
-### Making a Progressive Web App
+-   `**src/contexts/AuthContext.tsx**`: Manages user authentication state and provides utility functions for login and logout.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Future Enhancements
+-------------------
 
-### Advanced Configuration
+-   **Improved Error Handling**: Adding comprehensive error messages to guide users.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+-   **Token Refresh Flow**: Implement an automatic refresh of access tokens when they expire.
 
-### Deployment
+-   **Profile Management**: Allow users to update their profile information.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Contributing
+------------
 
-### `npm run build` fails to minify
+Contributions are welcome. To contribute:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1.  Fork the repository.
+
+2.  Create a feature branch (`git checkout -b feature-name`).
+
+3.  Commit your changes (`git commit -m 'Add some feature'`).
+
+4.  Push to the branch (`git push origin feature-name`).
+
+5.  Open a pull request.
+
+License
+-------
+
+This project is licensed under the MIT License.
