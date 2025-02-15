@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import WelcomePage from "./pages/WelcomePage";
 import api from "./services/axios";
 import { BudgetProvider } from "./contexts/BudgetContext";
+import { useAuth } from "./contexts/AuthContext";
 
 interface Budget {
   _id: string;
@@ -37,11 +38,11 @@ const HeaderWithNavigate: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const token = localStorage.getItem("accessToken");
+  const { isAuthenticated } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       const fetchBudgets = async () => {
         try {
           const response = await api.get("/budget");
@@ -50,10 +51,9 @@ const App: React.FC = () => {
           console.error("Error fetching budgets:", error);
         }
       };
-
       fetchBudgets();
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   return (
     <BudgetProvider>
@@ -63,31 +63,25 @@ const App: React.FC = () => {
           <Route
             path="/"
             element={
-              token ? (
+              isAuthenticated ? (
                 <WelcomePage
-                  budgets={budgets} // Pass budgets
-                  setBudgets={setBudgets} // Pass setBudgets to update the list
+                  budgets={budgets}
+                  setBudgets={setBudgets}
                 />
               ) : (
-                <Navigate to="/login" />
+                <Navigate to="/login" replace />
               )
             }
           />
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-          <Route
-            path="/signup"
-            element={<SignUp />}
-          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route
             path="/dashboard/:id"
-            element={token ? <Dashboard /> : <Navigate to="/login" />}
+            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
           />
           <Route
             path="*"
-            element={token ? <Navigate to="/" /> : <Navigate to="/login" />}
+            element={<Navigate to="/" replace />}
           />
         </Routes>
       </Router>

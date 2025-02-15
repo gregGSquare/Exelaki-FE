@@ -1,9 +1,16 @@
 import axios from "axios";
 import { setTokens, getAccessToken, clearTokens } from "../utils/tokenUtils";
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: isDevelopment 
+    ? "http://localhost:5000/api"
+    : "https://exelaki-be.onrender.com/api",
   withCredentials: true, // Include credentials to allow cookies to be sent
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
 declare global {

@@ -3,10 +3,13 @@ import { setTokens } from "../utils/tokenUtils";
 
 export const registerUser = async (email: string, password: string) => {
   try {
-    const response = await api.post("/auth/register", { email, password });
-    if (response.data) {
-      const { accessToken } = response.data;
-      setTokens(accessToken);
+    const response = await api.post("/auth/register", { 
+      email, 
+      password 
+    });
+    
+    if (response.data && response.data.accessToken) {
+      setTokens(response.data.accessToken);
       return response.data;
     } else {
       throw new Error("No token found in the response");

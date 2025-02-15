@@ -10,24 +10,21 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
-  const handleLogin = async () => {
-    setLoginError(""); // Clear any previous error messages
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated]);
 
+  const handleLogin = async () => {
+    setLoginError("");
     try {
       const token = await loginUser(email, password);
-      login(token.accessToken); // Set the token in AuthContext
-      console.log("Logged in successfully");
+      login(token.accessToken);
     } catch (error: any) {
       setLoginError(error.message || "Login failed");
     }
   };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log('I should navigate to welcome page from login');
-      navigate("/", { replace: true }); // Redirect to the welcome page after successful login
-    }
-  }, [isAuthenticated, navigate]);
 
   return (
     <div className="p-4">
