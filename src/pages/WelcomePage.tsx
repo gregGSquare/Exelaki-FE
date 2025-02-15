@@ -1,150 +1,279 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/axios";  // Axios service for making API requests
-import { useBudget } from "../contexts/BudgetContext";
-import DeleteConfirmationModal from "../modals/DeleteConfirmationModal";
-import { useAuth } from "../contexts/AuthContext";
-
-interface Budget {
-  _id: string;
-  name: string;
-  month: number;
-  year: number;
-}
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useBudget } from '../contexts/BudgetContext';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/axios';
+import { Budget } from '../types/budget';
 
 interface WelcomePageProps {
   budgets: Budget[];
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
 }
 
+interface DeleteModalProps {
+  budgetName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const DeleteModal: React.FC<DeleteModalProps> = ({ budgetName, onConfirm, onCancel }) => {
+  return (
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Delete Budget</h2>
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete "{budgetName}"? This action cannot be undone.
+        </p>
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
   const navigate = useNavigate();
   const { setCurrentBudgetId } = useBudget();
   const { isAuthenticated } = useAuth();
-  const [creatingBudget, setCreatingBudget] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [budgetName, setBudgetName] = useState("");
-  const [month, setMonth] = useState<number | null>(null);
-  const [year, setYear] = useState<number | null>(null);
-  const [deleteBudgetId, setDeleteBudgetId] = useState<string | null>(null);
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [isLoading, setIsLoading] = useState(false);
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      console.error("User is not authenticated");
-      navigate("/login");
-    }
-  }, [isAuthenticated, navigate]);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
 
-  const handleCreateNewBudget = async () => {
+  const handleCreateNewBudget = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
     try {
-      // Validate form
-      if (!budgetName || !month || !year) {
-        alert("Please fill in all fields");
-        return;
-      }
-
-      // Make an API call to create a new budget
       const response = await api.post("/budget", { name: budgetName, month, year });
       const newBudget = response.data;
-
-      // Update the budgets state with the new budget
       setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
-
-      // Set the current budget in context
       setCurrentBudgetId(newBudget._id);
-
-      // Navigate to the dashboard with the new budget ID
+      setShowCreateModal(false);
       navigate(`/dashboard/${newBudget._id}`);
     } catch (error) {
       console.error("Error creating new budget:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSelectBudget = (budgetId: string) => {
-    setCurrentBudgetId(budgetId); // Set the current budget in context
+    setCurrentBudgetId(budgetId);
     navigate(`/dashboard/${budgetId}`);
   };
 
-  const handleDeleteBudget = async () => {
-    if (deleteBudgetId) {
-      try {
-        await api.delete(`/budget/${deleteBudgetId}`);
-        setBudgets((prevBudgets) => prevBudgets.filter((budget) => budget._id !== deleteBudgetId));
-        setDeleteBudgetId(null);
-      } catch (error) {
-        console.error("Error deleting budget:", error);
-      }
+  const handleDeleteBudget = async (budget: Budget, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBudgetToDelete(budget);
+  };
+
+  const confirmDelete = async () => {
+    if (!budgetToDelete) return;
+    
+    try {
+      await api.delete(`/budget/${budgetToDelete._id}`);
+      setBudgets((prevBudgets) => 
+        prevBudgets.filter((b) => b._id !== budgetToDelete._id)
+      );
+      setBudgetToDelete(null);
+    } catch (error) {
+      console.error("Error deleting budget:", error);
     }
   };
 
   return (
-    <div className="text-center p-6">
-      <h1 className="text-4xl font-bold mb-4">Welcome to Your Budget Overview</h1>
-      <hr className="w-2/3 mx-auto mb-8" />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Welcome Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to Your Budget Archive
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Create and manage multiple budgets to track your finances across different months or scenarios.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {!creatingBudget ? (
+        {/* Create New Budget Button */}
+        <div className="mb-12">
           <button
-            onClick={() => setCreatingBudget(true)}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center justify-center"
+            onClick={() => setShowCreateModal(true)}
+            className="mx-auto flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
           >
-            <span className="mr-2 text-xl">+</span> Create New Monthly Budget
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Create New Budget
           </button>
-        ) : (
-          <div className="flex flex-col">
-            <input
-              type="text"
-              placeholder="Budget Name"
-              value={budgetName}
-              onChange={(e) => setBudgetName(e.target.value)}
-              className="mb-2 px-2 py-1 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Month (1-12)"
-              value={month || ""}
-              onChange={(e) => setMonth(parseInt(e.target.value))}
-              className="mb-2 px-2 py-1 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Year"
-              value={year || ""}
-              onChange={(e) => setYear(parseInt(e.target.value))}
-              className="mb-2 px-2 py-1 border rounded"
-            />
-            <button
-              onClick={handleCreateNewBudget}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+        </div>
+
+        {/* Budgets Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {budgets.map((budget) => (
+            <div
+              key={budget._id}
+              onClick={() => handleSelectBudget(budget._id)}
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden border border-gray-200 relative group"
             >
-              Create Budget
-            </button>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">{budget.name}</h3>
+                  <button
+                    onClick={(e) => handleDeleteBudget(budget, e)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-red-50 rounded-full"
+                    title="Delete budget"
+                  >
+                    <svg 
+                      className="w-5 h-5 text-red-500" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <span className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full">
+                  {months[budget.month - 1]} {budget.year}
+                </span>
+                <p className="text-sm text-gray-500 mt-2">
+                  Created on {new Date(budget.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Create Budget Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Budget</h2>
+              <form onSubmit={handleCreateNewBudget} className="space-y-6">
+                <div>
+                  <label htmlFor="budgetName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Budget Name
+                  </label>
+                  <input
+                    type="text"
+                    id="budgetName"
+                    value={budgetName}
+                    onChange={(e) => setBudgetName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="month" className="block text-sm font-medium text-gray-700 mb-1">
+                      Month
+                    </label>
+                    <select
+                      id="month"
+                      value={month}
+                      onChange={(e) => setMonth(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {months.map((monthName, index) => (
+                        <option key={monthName} value={index + 1}>
+                          {monthName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
+                      Year
+                    </label>
+                    <input
+                      type="number"
+                      id="year"
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min={2000}
+                      max={2100}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Creating...' : 'Create Budget'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
-        {budgets.map((budget) => (
-          <div key={budget._id} className="flex items-center">
-            <button
-              onClick={() => handleSelectBudget(budget._id)}
-              className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded flex-grow"
+        {/* Empty State */}
+        {budgets.length === 0 && (
+          <div className="text-center py-12">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Budget for {new Date(budget.year, budget.month - 1).toLocaleString("default", { month: "long", year: "numeric" })}
-            </button>
-            <button
-              onClick={() => setDeleteBudgetId(budget._id)}
-              className="ml-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded"
-            >
-              🗑️
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No budgets yet</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by creating your first budget.
+            </p>
           </div>
-        ))}
-      </div>
+        )}
 
-      {deleteBudgetId && (
-        <DeleteConfirmationModal
-          onConfirm={handleDeleteBudget}
-          onCancel={() => setDeleteBudgetId(null)}
-        />
-      )}
+        {/* Add the delete confirmation modal */}
+        {budgetToDelete && (
+          <DeleteModal
+            budgetName={budgetToDelete.name}
+            onConfirm={confirmDelete}
+            onCancel={() => setBudgetToDelete(null)}
+          />
+        )}
+      </div>
     </div>
   );
 };

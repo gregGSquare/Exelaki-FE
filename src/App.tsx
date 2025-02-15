@@ -14,13 +14,8 @@ import WelcomePage from "./pages/WelcomePage";
 import api from "./services/axios";
 import { BudgetProvider } from "./contexts/BudgetContext";
 import { useAuth } from "./contexts/AuthContext";
-
-interface Budget {
-  _id: string;
-  name: string;
-  month: number;
-  year: number;
-}
+import Footer from "./components/Footer";
+import { Budget } from './types/budget';
 
 const HeaderWithNavigate: React.FC = () => {
   const navigate = useNavigate();
@@ -58,32 +53,37 @@ const App: React.FC = () => {
   return (
     <BudgetProvider>
       <Router>
-        <HeaderWithNavigate />
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <WelcomePage
-                  budgets={budgets}
-                  setBudgets={setBudgets}
-                />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/dashboard/:id"
-            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="*"
-            element={<Navigate to="/" replace />}
-          />
-        </Routes>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          <HeaderWithNavigate />
+          <main className="pt-16 flex-grow">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  isAuthenticated ? (
+                    <WelcomePage
+                      budgets={budgets}
+                      setBudgets={setBudgets}
+                    />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route
+                path="/dashboard/:id"
+                element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="*"
+                element={<Navigate to="/" replace />}
+              />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
       </Router>
     </BudgetProvider>
   );

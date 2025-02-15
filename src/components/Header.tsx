@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 interface HeaderProps {
   onSignUpClick: () => void;
-  onHomeClick: () => void;  // Add this prop for the home button
+  onHomeClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onSignUpClick, onHomeClick }) => {
@@ -16,33 +16,72 @@ const Header: React.FC<HeaderProps> = ({ onSignUpClick, onHomeClick }) => {
     setAuthState(isAuthenticated);
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    console.log("isAuthenticated state:", isAuthenticated);
-  }, [isAuthenticated]);
-
   return (
-    <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">Exelaki</h1>
+    <header className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0 flex items-center">
+            <button 
+              onClick={onHomeClick}
+              className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent hover:from-blue-500 hover:to-blue-300 transition-all duration-300"
+            >
+              Exelaki
+            </button>
+          </div>
 
-      <div className="flex gap-4">
-        <button onClick={onHomeClick}>Home</button>
-        {!authState ? (
-          location.pathname === "/signup" ? (
-            <Link to="/login">
-              <button>Log In</button>
-            </Link>
-          ) : location.pathname === "/login" ? (
-            <Link to="/signup">
-              <button>Sign Up</button>
-            </Link>
-          ) : (
-            <Link to="/login">
-              <button>Log In</button>
-            </Link>
-          )
-        ) : (
-          <Link to="/login" onClick={logout}><button>Logout</button></Link>
-        )}
+          {/* Navigation */}
+          <nav className="flex items-center space-x-4">
+            {!authState ? (
+              <>
+                {location.pathname !== "/login" && (
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200"
+                  >
+                    Sign in
+                  </Link>
+                )}
+                {location.pathname !== "/signup" && (
+                  <Link
+                    to="/signup"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  >
+                    Sign up
+                  </Link>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={onHomeClick}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors duration-200 flex items-center"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  Sign out
+                </button>
+              </div>
+            )}
+          </nav>
+        </div>
       </div>
     </header>
   );
