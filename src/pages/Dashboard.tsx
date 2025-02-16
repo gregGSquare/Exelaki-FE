@@ -8,6 +8,7 @@ import CategoryTables from "../components/CategoryTables";
 import { useBudget } from "../contexts/BudgetContext";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/axios";
+import CategorySummary from '../components/CategorySummary';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -56,40 +57,98 @@ const Dashboard: React.FC = () => {
   const balance = totalIncome - totalExpenses;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      {/* Header Section - More Compact */}
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{budgetName}</h1>
-          <p className="text-sm text-gray-500">Budget Overview</p>
+    <div className="container mx-auto px-4 py-8 mt-16">
+      {/* Financial overview row */}
+      <div className="bg-white shadow-sm rounded-lg px-4 py-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-xl font-bold">{budgetName}</h1>
+          
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Income</span>
+              <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Expenses</span>
+              <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Balance</span>
+              <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                ${balance.toLocaleString()}
+              </span>
+            </div>
+            <button
+              onClick={() => setIsAddEntryModalOpen(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+            >
+              Add Entry
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => navigate('/')}
-          className="text-sm text-gray-600 hover:text-gray-900 transition-colors flex items-center"
-        >
-          ← Back
-        </button>
       </div>
 
       <div className="grid grid-cols-12 gap-4">
         {/* Left Column - Financial Overview */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Quick Stats */}
+
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-500">Income</p>
-                <p className="text-lg font-semibold text-green-600">${totalIncome.toLocaleString()}</p>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Income Categories</h3>
+                <span className="text-sm font-medium text-green-600">
+                  Total: ${totalIncome.toLocaleString()}
+                </span>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Expenses</p>
-                <p className="text-lg font-semibold text-red-600">${totalExpenses.toLocaleString()}</p>
+              <div className="space-y-2">
+                {Object.entries(
+                  incomes.reduce((acc, entry) => {
+                    const categoryName = entry.category.name;
+                    if (!acc[categoryName]) {
+                      acc[categoryName] = 0;
+                    }
+                    acc[categoryName] += Number(entry.amount);
+                    return acc;
+                  }, {} as { [key: string]: number })
+                ).map(([category, amount]) => (
+                  <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700">{category}</span>
+                    <span className="text-sm font-medium text-green-600">
+                      ${amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="pt-2 border-t">
-                <p className="text-sm text-gray-500">Balance</p>
-                <p className={`text-lg font-semibold ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  ${balance.toLocaleString()}
-                </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
+                <span className="text-sm font-medium text-red-600">
+                  Total: ${totalExpenses.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(
+                  expenses.reduce((acc, entry) => {
+                    const categoryName = entry.category.name;
+                    if (!acc[categoryName]) {
+                      acc[categoryName] = 0;
+                    }
+                    acc[categoryName] += Number(entry.amount);
+                    return acc;
+                  }, {} as { [key: string]: number })
+                ).map(([category, amount]) => (
+                  <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700">{category}</span>
+                    <span className="text-sm font-medium text-red-600">
+                      ${amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -109,23 +168,12 @@ const Dashboard: React.FC = () => {
               <p className="text-sm text-gray-500">Coming Soon</p>
             </div>
           </div>
+
+          
         </div>
 
         {/* Right Column - Transactions */}
         <div className="col-span-12 lg:col-span-9 space-y-4">
-          {/* Add Entry Section */}
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => setIsAddEntryModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add New Entry
-            </button>
-          </div>
-
           {/* Transactions Sections */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="bg-white rounded-lg shadow-sm p-4">
