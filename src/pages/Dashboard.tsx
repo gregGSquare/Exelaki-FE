@@ -18,7 +18,8 @@ const Dashboard: React.FC = () => {
   const [budgetName, setBudgetName] = useState("");
   const { isAuthenticated } = useAuth();
   console.log('Fetching entries for budgetId:', budgetId);
-  const { incomes, expenses, fetchData } = useFetchData(budgetId); // Pass budgetId to fetch only relevant entries
+  const { incomes, expenses, fetchData } = useFetchData(budgetId);
+  console.log('Dashboard received:', { incomes, expenses });
   const {
     editEntry,
     handleEdit,

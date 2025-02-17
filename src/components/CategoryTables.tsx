@@ -26,6 +26,7 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
   handleDelete,
 }) => {
   const groupedEntries = entries.reduce((acc, entry) => {
+    if (!entry.category?.name) return acc;
     const categoryName = entry.category.name;
     if (!acc[categoryName]) {
       acc[categoryName] = [];

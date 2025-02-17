@@ -7,8 +7,14 @@ export const useFetchData = (budgetId: string) => {
 
   const fetchData = async () => {
     try {
-      const fetchedEntries = await fetchEntries(budgetId); // Pass budgetId to fetch relevant entries
-      setEntries(fetchedEntries);
+      const fetchedEntries = await fetchEntries(budgetId);
+      console.log('API returned entries:', fetchedEntries);
+      // Map categoryId to category
+      const mappedEntries = fetchedEntries.map((entry: Entry) => ({
+        ...entry,
+        category: entry.categoryId
+      }));
+      setEntries(mappedEntries);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
