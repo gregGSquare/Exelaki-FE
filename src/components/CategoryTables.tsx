@@ -8,6 +8,17 @@ interface CategoryTablesProps {
   handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
 }
 
+const getTypeStyles = (type: 'INCOME' | 'EXPENSE' | 'SAVING') => {
+  switch (type) {
+    case 'INCOME':
+      return { bg: 'bg-green-50', text: 'text-green-700', amount: 'text-green-600' };
+    case 'EXPENSE':
+      return { bg: 'bg-red-50', text: 'text-red-700', amount: 'text-red-600' };
+    case 'SAVING':
+      return { bg: 'bg-blue-50', text: 'text-blue-700', amount: 'text-blue-600' };
+  }
+};
+
 const CategoryTables: React.FC<CategoryTablesProps> = ({
   entries,
   entryType,
@@ -23,6 +34,8 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
     return acc;
   }, {} as { [key: string]: Entry[] });
 
+  const styles = getTypeStyles(entryType);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {Object.entries(groupedEntries).map(([categoryName, categoryEntries]) => {
@@ -31,12 +44,10 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
         return (
           <div key={categoryName} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             {/* Category Header */}
-            <div className={`px-4 py-3 ${entryType === 'INCOME' ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`px-4 py-3 ${styles.bg}`}>
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900">{categoryName}</h3>
-                <span className={`text-sm font-medium ${
-                  entryType === 'INCOME' ? 'text-green-700' : 'text-red-700'
-                }`}>
+                <span className={`text-sm font-medium ${styles.text}`}>
                   ${totalAmount.toLocaleString()}
                 </span>
               </div>
@@ -51,20 +62,43 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
                     className="p-3 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-sm font-medium text-gray-900">
-                        {entry.name}
-                      </span>
-                      <span className={`text-sm font-medium ${
-                        entryType === 'INCOME' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {entry.name}
+                        </span>
+                        {entry.dueDayOfMonth && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            Due: Day {entry.dueDayOfMonth}
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-sm font-medium ${styles.amount}`}>
                         ${Number(entry.amount).toLocaleString()}
                       </span>
                     </div>
                     
+                    <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex gap-2 text-xs text-gray-500">
+                        <span>{entry.recurrence.toLowerCase()}</span>
+                        {entry.flexibility && (
+                          <span>• {entry.flexibility.toLowerCase()}</span>
+                        )}
+                      </div>
+                      {entry.tags && entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {entry.tags.map(tag => (
+                            <span 
+                              key={tag} 
+                              className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+                            >
+                              {tag.toLowerCase()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
-                        {new Date(entry.date).toLocaleDateString()}
-                      </span>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(entry, entryType)}

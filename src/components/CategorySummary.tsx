@@ -1,9 +1,10 @@
 import React from 'react';
 import { Entry } from '../types/entryTypes';
+import { CategoryType } from '../types/categoryTypes';
 
 interface CategorySummaryProps {
   entries: Entry[];
-  type: 'INCOME' | 'EXPENSE' | 'SAVING';
+  type: CategoryType;
 }
 
 const CategorySummary: React.FC<CategorySummaryProps> = ({ entries, type }) => {

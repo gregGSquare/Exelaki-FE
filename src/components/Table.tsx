@@ -1,18 +1,24 @@
 import React from "react";
 import { Entry } from "../types/entryTypes";
+import { CategoryType } from "../types/categoryTypes";
 
 interface Column {
   name: string; // The name of the column to display in the header
   field: keyof Entry; // The field in the Entry object that this column corresponds to
+  format?: (value: any) => string | JSX.Element;
 }
 
 interface TableProps {
   entries: Entry[];
   columns: Column[]; // Array of column definitions
   categoryName: string;
-  handleEdit: (entry: Entry, entryType: "INCOME" | "EXPENSE" | "SAVING") => void;
-  handleDelete: (id: string, entryType: "INCOME" | "EXPENSE" | "SAVING") => void;
+  handleEdit: (entry: Entry, entryType: CategoryType) => void;
+  handleDelete: (id: string, entryType: CategoryType) => void;
 }
+
+const formatCurrency = (amount: number) => (
+  `$${Number(amount).toLocaleString()}`
+);
 
 const Table: React.FC<TableProps> = ({
   entries,
@@ -45,7 +51,12 @@ const Table: React.FC<TableProps> = ({
             <tr key={entry._id}>
               {columns.map((column, index) => (
                 <td key={index} className="border px-4 py-2">
-                  {entry[column.field]}
+                  {column.format 
+                    ? column.format(entry[column.field])
+                    : column.field === 'category' 
+                      ? entry.category.name
+                      : String(entry[column.field])
+                  }
                 </td>
               ))}
               <td className="border px-4 py-2">
@@ -66,7 +77,7 @@ const Table: React.FC<TableProps> = ({
           ))}
           <tr>
             <td className="border px-4 py-2 font-bold">Total</td>
-            <td className="border px-4 py-2 font-bold">{totalAmount}</td>
+            <td className="border px-4 py-2 font-bold">{formatCurrency(totalAmount)}</td>
             <td className="border px-4 py-2" colSpan={columns.length - 1}></td>
           </tr>
         </tbody>

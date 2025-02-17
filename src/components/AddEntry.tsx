@@ -1,23 +1,27 @@
-import React, { useState } from "react";
+import React, { useState } from "react";  
 import api from "../services/axios";
-import { Category } from "../types/categoryTypes";
-import { useBudget } from "../contexts/BudgetContext";
+import { Category, CategoryType } from "../types/categoryTypes";
+import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";   
 
 interface AddEntryProps {
   onAdd: () => void;
   categories: Category[];
   isOpen: boolean;
   onClose: () => void;
+  budgetId: string;
 }
 
-const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose }) => {
+const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId }) => {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedType, setSelectedType] = useState<"" | "INCOME" | "EXPENSE" | "SAVING">("");
+  const [selectedType, setSelectedType] = useState<"" | CategoryType>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [customCategoryMode, setCustomCategoryMode] = useState(false);
   const [customCategoryName, setCustomCategoryName] = useState("");
-  const { currentBudgetId } = useBudget();
+  const [dueDayOfMonth, setDueDayOfMonth] = useState<string>("");
+  const [flexibility, setFlexibility] = useState<EntryFlexibility>("FIXED");
+  const [recurrence, setRecurrence] = useState<EntryRecurrence>("MONTHLY");
+  const [tags, setTags] = useState<EntryTags[]>([]);
 
   const resetForm = () => {
     setName("");
@@ -26,6 +30,18 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
     setSelectedCategoryId("");
     setCustomCategoryMode(false);
     setCustomCategoryName("");
+    setDueDayOfMonth("");
+    setFlexibility("FIXED");
+    setRecurrence("MONTHLY");
+    setTags([]);
+  };
+
+  const handleTagToggle = (tag: EntryTags) => {
+    setTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,15 +63,15 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
         categoryId = categoryResponse.data._id;
       }
 
-      // Updated payload structure to match the schema
-      const payload = {
+      const payload: CreateEntryPayload = {
         name: name.trim(),
         amount: parseFloat(amount),
-        category: {
-          name: customCategoryMode ? customCategoryName : categories.find(c => c._id === categoryId)?.name,
-          type: selectedType
-        },
-        budget: currentBudgetId
+        categoryId: categoryId,
+        budgetId: budgetId,
+        ...(dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
+        flexibility,
+        recurrence,
+        tags,
       };
 
       console.log('Submitting entry with payload:', payload);
@@ -98,7 +114,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
             </label>
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as "INCOME" | "EXPENSE" | "SAVING")}
+              onChange={(e) => setSelectedType(e.target.value as CategoryType)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -178,6 +194,91 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
               </select>
             )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Due Day of Month
+            </label>
+            <input
+              type="number"
+              value={dueDayOfMonth}
+              onChange={(e) => setDueDayOfMonth(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="1"
+              max="31"
+              placeholder="Optional"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Recurrence
+            </label>
+            <select
+              value={recurrence}
+              onChange={(e) => setRecurrence(e.target.value as EntryRecurrence)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="MONTHLY">Monthly</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="YEARLY">Yearly</option>
+              <option value="ONE_TIME">One Time</option>
+            </select>
+          </div>
+
+          {selectedType === 'EXPENSE' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Flexibility
+                </label>
+                <select
+                  value={flexibility}
+                  onChange={(e) => setFlexibility(e.target.value as EntryFlexibility)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="FIXED">Fixed</option>
+                  <option value="FLEXIBLE">Flexible</option>
+                  <option value="OPTIONAL">Optional</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'HOUSING',
+                    'UTILITIES',
+                    'TRANSPORTATION',
+                    'FOOD',
+                    'DEBT',
+                    'INSURANCE',
+                    'SUBSCRIPTION',
+                    'ENTERTAINMENT',
+                    'MEDICAL',
+                    'MISC'
+                  ].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleTagToggle(tag as EntryTags)}
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        tags.includes(tag as EntryTags)
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {tag.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="flex justify-end space-x-3 pt-4">
             <button

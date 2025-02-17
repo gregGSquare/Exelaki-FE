@@ -251,6 +251,7 @@ const Dashboard: React.FC = () => {
         categories={[...inCategories, ...outCategories]}
         isOpen={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
+        budgetId={budgetId}
       />
     </div>
   );
