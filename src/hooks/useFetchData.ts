@@ -20,9 +20,9 @@ export const useFetchData = (budgetId: string) => {
     }
   }, [budgetId]);
 
-  const incomes = entries.filter(entry => entry.category.type === 'INCOME');
-  const expenses = entries.filter(entry => entry.category.type === 'EXPENSE');
-  const savings = entries.filter(entry => entry.category.type === 'SAVING');
+  const incomes = entries.filter(entry => entry.category?.type === 'INCOME');
+  const expenses = entries.filter(entry => entry.category?.type === 'EXPENSE');
+  const savings = entries.filter(entry => entry.category?.type === 'SAVING');
 
   return { entries, incomes, expenses, fetchData, setEntries };
 };
