@@ -3,9 +3,9 @@ import { Entry } from '../types/entryTypes';
 
 interface CategoryTablesProps {
   entries: Entry[];
-  entryType: 'IN' | 'OUT';
-  handleEdit: (entry: Entry, entryType: 'IN' | 'OUT') => void;
-  handleDelete: (id: string, type: 'IN' | 'OUT') => void;
+  entryType: 'INCOME' | 'EXPENSE' | 'SAVING';
+  handleEdit: (entry: Entry, entryType: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
+  handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
 }
 
 const CategoryTables: React.FC<CategoryTablesProps> = ({
@@ -31,11 +31,11 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
         return (
           <div key={categoryName} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             {/* Category Header */}
-            <div className={`px-4 py-3 ${entryType === 'IN' ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`px-4 py-3 ${entryType === 'INCOME' ? 'bg-green-50' : 'bg-red-50'}`}>
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900">{categoryName}</h3>
                 <span className={`text-sm font-medium ${
-                  entryType === 'IN' ? 'text-green-700' : 'text-red-700'
+                  entryType === 'INCOME' ? 'text-green-700' : 'text-red-700'
                 }`}>
                   ${totalAmount.toLocaleString()}
                 </span>
@@ -55,7 +55,7 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
                         {entry.name}
                       </span>
                       <span className={`text-sm font-medium ${
-                        entryType === 'IN' ? 'text-green-600' : 'text-red-600'
+                        entryType === 'INCOME' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         ${Number(entry.amount).toLocaleString()}
                       </span>

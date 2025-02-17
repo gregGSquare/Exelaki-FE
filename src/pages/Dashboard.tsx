@@ -180,7 +180,7 @@ const Dashboard: React.FC = () => {
               <h2 className="text-sm font-medium text-gray-900 mb-3">Income</h2>
               <CategoryTables
                 entries={incomes}
-                entryType="IN"
+                entryType="INCOME"
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
               />
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
               <h2 className="text-sm font-medium text-gray-900 mb-3">Expenses</h2>
               <CategoryTables
                 entries={expenses}
-                entryType="OUT"
+                entryType="EXPENSE"
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
               />

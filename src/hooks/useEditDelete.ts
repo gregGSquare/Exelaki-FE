@@ -5,7 +5,7 @@ import { Entry } from "../types/entryTypes";
 export const useEditDelete = (fetchData: () => void) => {
   const [editEntryState, setEditEntryState] = useState<Entry | null>(null);
 
-  const handleDelete = async (id: string, type: "IN" | "OUT") => {
+  const handleDelete = async (id: string, type: "INCOME" | "EXPENSE" | "SAVING") => {
     try {
       console.log("in the handle delete: ", id, type);
       await deleteEntry(id);  // Unified delete function
@@ -15,7 +15,7 @@ export const useEditDelete = (fetchData: () => void) => {
     }
   };
 
-  const handleEdit = (entry: Entry, entryType: "IN" | "OUT") => {
+  const handleEdit = (entry: Entry, entryType: "INCOME" | "EXPENSE" | "SAVING") => {
     setEditEntryState({ ...entry, type: entryType });
   };
 

@@ -10,8 +10,8 @@ interface TableProps {
   entries: Entry[];
   columns: Column[]; // Array of column definitions
   categoryName: string;
-  handleEdit: (entry: Entry, entryType: "IN" | "OUT") => void;
-  handleDelete: (id: string, entryType: "IN" | "OUT") => void;
+  handleEdit: (entry: Entry, entryType: "INCOME" | "EXPENSE" | "SAVING") => void;
+  handleDelete: (id: string, entryType: "INCOME" | "EXPENSE" | "SAVING") => void;
 }
 
 const Table: React.FC<TableProps> = ({

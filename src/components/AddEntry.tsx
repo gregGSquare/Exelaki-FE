@@ -13,7 +13,7 @@ interface AddEntryProps {
 const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose }) => {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedType, setSelectedType] = useState<"" | "IN" | "OUT" | "SAVINGS">("");
+  const [selectedType, setSelectedType] = useState<"" | "INCOME" | "EXPENSE" | "SAVING">("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [customCategoryMode, setCustomCategoryMode] = useState(false);
   const [customCategoryName, setCustomCategoryName] = useState("");
@@ -98,13 +98,14 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
             </label>
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as "IN" | "OUT" | "SAVINGS")}
+              onChange={(e) => setSelectedType(e.target.value as "INCOME" | "EXPENSE" | "SAVING")}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="">Select type</option>
-              <option value="IN">Income</option>
-              <option value="OUT">Expense</option>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expense</option>
+              <option value="SAVING">Saving</option>
             </select>
           </div>
 
