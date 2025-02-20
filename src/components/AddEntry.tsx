@@ -1,4 +1,4 @@
-import React, { useState } from "react";  
+import React, { useState, useEffect } from "react";  
 import api from "../services/axios";
 import { Category, CategoryType } from "../types/categoryTypes";
 import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";   
@@ -9,9 +9,20 @@ interface AddEntryProps {
   isOpen: boolean;
   onClose: () => void;
   budgetId: string;
+  preselectedType?: CategoryType;
+  preselectedCategoryId?: string;
+  disableTypeSelection?: boolean;
+  disableCategorySelection?: boolean;
 }
 
-const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId }) => {
+const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId, preselectedType, preselectedCategoryId, disableTypeSelection = false, disableCategorySelection = false }) => {
+  console.log('AddEntry render:', { 
+    categories, 
+    preselectedType,
+    preselectedCategoryId,
+    isOpen 
+  });
+
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedType, setSelectedType] = useState<"" | CategoryType>("");
@@ -22,6 +33,27 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const [flexibility, setFlexibility] = useState<EntryFlexibility>("FIXED");
   const [recurrence, setRecurrence] = useState<EntryRecurrence>("MONTHLY");
   const [tags, setTags] = useState<EntryTags[]>([]);
+
+  useEffect(() => {
+    if (preselectedType) {
+      setSelectedType(preselectedType);
+    }
+  }, [preselectedType]);
+
+  useEffect(() => {
+    if (preselectedCategoryId) {
+      setSelectedCategoryId(preselectedCategoryId);
+    }
+  }, [preselectedCategoryId]);
+
+  useEffect(() => {
+    console.log('AddEntry props changed:', { 
+      categoriesLength: categories?.length,
+      categories,
+      selectedType,
+      preselectedType
+    });
+  }, [categories, selectedType, preselectedType]);
 
   const resetForm = () => {
     setName("");
@@ -117,6 +149,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
               onChange={(e) => setSelectedType(e.target.value as CategoryType)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={disableTypeSelection}
             >
               <option value="">Select type</option>
               <option value="INCOME">Income</option>
@@ -158,13 +191,15 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
               <label className="block text-sm font-medium text-gray-700">
                 Category
               </label>
-              <button
-                type="button"
-                onClick={() => setCustomCategoryMode(!customCategoryMode)}
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                {customCategoryMode ? "Select existing" : "Create new"}
-              </button>
+              {!disableCategorySelection && (
+                <button
+                  type="button"
+                  onClick={() => setCustomCategoryMode(!customCategoryMode)}
+                  className="text-sm text-blue-600 hover:text-blue-500"
+                >
+                  {customCategoryMode ? "Select existing" : "Create new"}
+                </button>
+              )}
             </div>
             
             {customCategoryMode ? (
@@ -182,6 +217,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                disabled={disableCategorySelection}
               >
                 <option value="">Select category</option>
                 {categories

@@ -17,9 +17,7 @@ const Dashboard: React.FC = () => {
   const { setCurrentBudgetId } = useBudget();
   const [budgetName, setBudgetName] = useState("");
   const { isAuthenticated } = useAuth();
-  console.log('Fetching entries for budgetId:', budgetId);
-  const { incomes, expenses, fetchData } = useFetchData(budgetId);
-  console.log('Dashboard received:', { incomes, expenses });
+  const { incomes, expenses, savings, fetchData } = useFetchData(budgetId);
   const {
     editEntry,
     handleEdit,
@@ -27,8 +25,13 @@ const Dashboard: React.FC = () => {
     handleEditSubmit,
     setEditEntry,
   } = useEditDelete(fetchData);
-  const { inCategories, outCategories } = useFetchCategories();
+  const { incomeCategories, expenseCategories, savingCategories } = useFetchCategories();
+  console.log('Categories fetched:', { incomeCategories, expenseCategories, savingCategories });
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
+  const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
+  const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
+  const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -49,13 +52,18 @@ const Dashboard: React.FC = () => {
       setBudgetName(response.data.name);
     } catch (error) {
       console.error("Error fetching budget name:", error);
-      console.error("Budget ID:", budgetId);
     }
   };
 
   const totalIncome = incomes.reduce((sum, inc) => sum + Number(inc.amount), 0);
   const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+  const totalSavings = savings.reduce((sum, sav) => sum + Number(sav.amount), 0);
   const balance = totalIncome - totalExpenses;
+
+  const handleAddToCategory = (categoryId: string, categoryName: string) => {
+    setSelectedCategory({ id: categoryId, name: categoryName });
+    setIsAddToCategoryModalOpen(true);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 mt-16">
@@ -93,11 +101,21 @@ const Dashboard: React.FC = () => {
         {/* Left Column - Financial Overview */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Quick Stats */}
-
+          {/* Incomes */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Income Categories</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Incomes</h3>
+                  <button
+                    onClick={() => setIsAddIncomeModalOpen(true)}
+                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
                 <span className="text-sm font-medium text-green-600">
                   Total: ${totalIncome.toLocaleString()}
                 </span>
@@ -123,11 +141,11 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
+          {/* Expenses */}
           <div className="bg-white rounded-lg shadow-sm p-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
                 <span className="text-sm font-medium text-red-600">
                   Total: ${totalExpenses.toLocaleString()}
                 </span>
@@ -146,6 +164,46 @@ const Dashboard: React.FC = () => {
                   <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                     <span className="text-sm text-gray-700">{category}</span>
                     <span className="text-sm font-medium text-red-600">
+                      ${amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Savings */}
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900">Savings</h3>
+                  <button
+                    onClick={() => setIsAddSavingModalOpen(true)}
+                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="text-sm font-medium text-[#562900]">
+                  Total: ${totalSavings.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {Object.entries(
+                  savings.reduce((acc, entry) => {
+                    const categoryName = entry.category.name;
+                    if (!acc[categoryName]) {
+                      acc[categoryName] = 0;
+                    }
+                    acc[categoryName] += Number(entry.amount);
+                    return acc;
+                  }, {} as { [key: string]: number })
+                ).map(([category, amount]) => (
+                  <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <span className="text-sm text-gray-700">{category}</span>
+                    <span className="text-sm font-medium text-[#562900]">
                       ${amount.toLocaleString()}
                     </span>
                   </div>
@@ -176,16 +234,7 @@ const Dashboard: React.FC = () => {
         {/* Right Column - Transactions */}
         <div className="col-span-12 lg:col-span-9 space-y-4">
           {/* Transactions Sections */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-sm font-medium text-gray-900 mb-3">Income</h2>
-              <CategoryTables
-                entries={incomes}
-                entryType="INCOME"
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h2 className="text-sm font-medium text-gray-900 mb-3">Expenses</h2>
               <CategoryTables
@@ -193,6 +242,7 @@ const Dashboard: React.FC = () => {
                 entryType="EXPENSE"
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
+                onAddToCategory={handleAddToCategory}
               />
             </div>
           </div>
@@ -249,10 +299,50 @@ const Dashboard: React.FC = () => {
       {/* Add Entry Modal */}
       <AddEntry 
         onAdd={fetchData}
-        categories={[...inCategories, ...outCategories]}
+        categories={[...incomeCategories, ...expenseCategories, ...savingCategories]}
         isOpen={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
         budgetId={budgetId}
+      />
+
+      {/* Add Income Modal */}
+      <AddEntry 
+        onAdd={fetchData}
+        categories={incomeCategories}
+        isOpen={isAddIncomeModalOpen}
+        onClose={() => setIsAddIncomeModalOpen(false)}
+        budgetId={budgetId}
+        preselectedType="INCOME"
+        disableTypeSelection={true}
+        disableCategorySelection={false}
+      />
+
+      {/* Add Saving Modal */}
+      <AddEntry 
+        onAdd={fetchData}
+        categories={savingCategories}
+        isOpen={isAddSavingModalOpen}
+        onClose={() => setIsAddSavingModalOpen(false)}
+        budgetId={budgetId}
+        preselectedType="SAVING"
+        disableTypeSelection={true}
+        disableCategorySelection={false}
+      />
+
+      {/* Add to Category Modal */}
+      <AddEntry 
+        onAdd={fetchData}
+        categories={expenseCategories}
+        isOpen={isAddToCategoryModalOpen}
+        onClose={() => {
+          setIsAddToCategoryModalOpen(false);
+          setSelectedCategory(null);
+        }}
+        budgetId={budgetId}
+        preselectedType="EXPENSE"
+        preselectedCategoryId={selectedCategory?.id}
+        disableTypeSelection={true}
+        disableCategorySelection={true}
       />
     </div>
   );

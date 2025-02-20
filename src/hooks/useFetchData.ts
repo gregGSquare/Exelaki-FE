@@ -30,5 +30,5 @@ export const useFetchData = (budgetId: string) => {
   const expenses = entries.filter(entry => entry.category?.type === 'EXPENSE');
   const savings = entries.filter(entry => entry.category?.type === 'SAVING');
 
-  return { entries, incomes, expenses, fetchData, setEntries };
+  return { entries, incomes, expenses, savings, fetchData, setEntries };
 };

@@ -6,6 +6,7 @@ interface CategoryTablesProps {
   entryType: 'INCOME' | 'EXPENSE' | 'SAVING';
   handleEdit: (entry: Entry, entryType: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
   handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
+  onAddToCategory: (categoryId: string, categoryName: string) => void;
 }
 
 const getTypeStyles = (type: 'INCOME' | 'EXPENSE' | 'SAVING') => {
@@ -24,6 +25,7 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
   entryType,
   handleEdit,
   handleDelete,
+  onAddToCategory,
 }) => {
   const groupedEntries = entries.reduce((acc, entry) => {
     if (!entry.category?.name) return acc;
@@ -47,7 +49,17 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
             {/* Category Header */}
             <div className={`px-4 py-3 ${styles.bg}`}>
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-gray-900">{categoryName}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900">{categoryName}</h3>
+                  <button
+                    onClick={() => onAddToCategory(categoryEntries[0].category._id, categoryName)}
+                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
                 <span className={`text-sm font-medium ${styles.text}`}>
                   ${totalAmount.toLocaleString()}
                 </span>
