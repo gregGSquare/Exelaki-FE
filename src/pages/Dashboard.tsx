@@ -9,6 +9,7 @@ import { useBudget } from "../contexts/BudgetContext";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/axios";
 import CategorySummary from '../components/CategorySummary';
+import { fetchFinancialIndicators } from "../services/dashBoardService";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +32,13 @@ const Dashboard: React.FC = () => {
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
+  const [financialIndicators, setFinancialIndicators] = useState({
+    totalScore: "0%",
+    debtToIncomeRatio: { value: "0%", status: "GOOD" },
+    savingsRate: "0%",
+    carCostRatio: "0%",
+    homeCostRatio: "0%"
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -42,6 +50,7 @@ const Dashboard: React.FC = () => {
     if (budgetId) {
       setCurrentBudgetId(budgetId); // Set the current budget in context
       fetchBudgetName(budgetId); // Fetch budget name to display
+      loadFinancialIndicators();
     }
   }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated]);
 
@@ -51,6 +60,15 @@ const Dashboard: React.FC = () => {
       setBudgetName(response.data.name);
     } catch (error) {
       console.error("Error fetching budget name:", error);
+    }
+  };
+
+  const loadFinancialIndicators = async () => {
+    try {
+      const indicators = await fetchFinancialIndicators(budgetId);
+      setFinancialIndicators(indicators);
+    } catch (error) {
+      console.error("Error fetching financial indicators:", error);
     }
   };
 
@@ -245,9 +263,46 @@ const Dashboard: React.FC = () => {
 
           {/* Placeholder for Financial Health Score */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Financial Health</h3>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-              <p className="text-sm text-gray-500">Coming Soon</p>
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Financial Health</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Total Score</span>
+                <span className="text-sm font-medium text-blue-600">
+                  {financialIndicators.totalScore}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Debt to Income Ratio</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    financialIndicators.debtToIncomeRatio.status === 'GOOD' 
+                      ? 'text-green-600' 
+                      : financialIndicators.debtToIncomeRatio.status === 'WARNING'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                  }`}>
+                    {financialIndicators.debtToIncomeRatio.value}
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Savings Rate</span>
+                <span className="text-sm font-medium text-green-600">
+                  {financialIndicators.savingsRate}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Car Cost Ratio</span>
+                <span className="text-sm font-medium text-red-600">
+                  {financialIndicators.carCostRatio}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Home Cost Ratio</span>
+                <span className="text-sm font-medium text-[#562900]">
+                  {financialIndicators.homeCostRatio}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -329,7 +384,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Entry Modal */}
       <AddEntry 
-        onAdd={fetchData}
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
         categories={[...incomeCategories, ...expenseCategories, ...savingCategories]}
         isOpen={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
@@ -338,7 +396,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Income Modal */}
       <AddEntry 
-        onAdd={fetchData}
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
         categories={incomeCategories}
         isOpen={isAddIncomeModalOpen}
         onClose={() => setIsAddIncomeModalOpen(false)}
@@ -350,7 +411,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Saving Modal */}
       <AddEntry 
-        onAdd={fetchData}
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
         categories={savingCategories}
         isOpen={isAddSavingModalOpen}
         onClose={() => setIsAddSavingModalOpen(false)}
@@ -362,7 +426,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add to Category Modal */}
       <AddEntry 
-        onAdd={fetchData}
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
         categories={expenseCategories}
         isOpen={isAddToCategoryModalOpen}
         onClose={() => {

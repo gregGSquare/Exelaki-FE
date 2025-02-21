@@ -24,3 +24,13 @@ export const editEntry = async (id: string, updatedEntry: any) => {
   }
   return response.data;
 };
+
+export const fetchFinancialIndicators = async (budgetId: string) => {
+  try {
+    const response = await api.get(`/financial-indicators/${budgetId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching financial indicators:", error);
+    throw error;
+  }
+};
