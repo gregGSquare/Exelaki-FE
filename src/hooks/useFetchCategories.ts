@@ -14,12 +14,6 @@ const useFetchCategories = () => {
       // The API returns an object with separate category arrays
       const { incomeCategories: income, expenseCategories: expense, savingCategories: saving } = response;
 
-      console.log('Setting categories from API:', {
-        income,
-        expense,
-        saving
-      });
-
       setIncomeCategories(income || []);
       setExpenseCategories(expense || []);
       setSavingCategories(saving || []);

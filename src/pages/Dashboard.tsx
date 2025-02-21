@@ -26,7 +26,6 @@ const Dashboard: React.FC = () => {
     setEditEntry,
   } = useEditDelete(fetchData);
   const { incomeCategories, expenseCategories, savingCategories } = useFetchCategories();
-  console.log('Categories fetched:', { incomeCategories, expenseCategories, savingCategories });
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);

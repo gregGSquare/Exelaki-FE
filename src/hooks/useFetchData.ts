@@ -8,7 +8,6 @@ export const useFetchData = (budgetId: string) => {
   const fetchData = async () => {
     try {
       const fetchedEntries = await fetchEntries(budgetId);
-      console.log('API returned entries:', fetchedEntries);
       // Map categoryId to category
       const mappedEntries = fetchedEntries.map((entry: Entry) => ({
         ...entry,
