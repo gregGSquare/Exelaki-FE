@@ -101,40 +101,56 @@ const Dashboard: React.FC = () => {
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Quick Stats */}
           {/* Incomes */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-white rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Income</h3>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900">Incomes</h3>
                   <button
                     onClick={() => setIsAddIncomeModalOpen(true)}
-                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                    className="text-gray-400 hover:text-gray-600"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
+                  <span className="text-sm font-medium text-green-600">
+                    Total: ${totalIncome.toLocaleString()}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-green-600">
-                  Total: ${totalIncome.toLocaleString()}
-                </span>
               </div>
               <div className="space-y-2">
-                {Object.entries(
-                  incomes.reduce((acc, entry) => {
-                    const categoryName = entry.category.name;
-                    if (!acc[categoryName]) {
-                      acc[categoryName] = 0;
-                    }
-                    acc[categoryName] += Number(entry.amount);
-                    return acc;
-                  }, {} as { [key: string]: number })
-                ).map(([category, amount]) => (
-                  <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                    <span className="text-sm text-gray-700">{category}</span>
-                    <span className="text-sm font-medium text-green-600">
-                      ${amount.toLocaleString()}
-                    </span>
+                {incomes.map((entry) => (
+                  <div key={entry._id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700">{entry.name}</span>
+                      <span className="text-xs text-gray-500">{entry.category.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-green-600">
+                        ${Number(entry.amount).toLocaleString()}
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(entry, 'INCOME')}
+                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit entry"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(entry._id, 'INCOME')}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete entry"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -171,40 +187,56 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           {/* Savings */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-white rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Savings</h3>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900">Savings</h3>
                   <button
                     onClick={() => setIsAddSavingModalOpen(true)}
-                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                    className="text-gray-400 hover:text-gray-600"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
+                  <span className="text-sm font-medium text-[#562900]">
+                    Total: ${totalSavings.toLocaleString()}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-[#562900]">
-                  Total: ${totalSavings.toLocaleString()}
-                </span>
               </div>
               <div className="space-y-2">
-                {Object.entries(
-                  savings.reduce((acc, entry) => {
-                    const categoryName = entry.category.name;
-                    if (!acc[categoryName]) {
-                      acc[categoryName] = 0;
-                    }
-                    acc[categoryName] += Number(entry.amount);
-                    return acc;
-                  }, {} as { [key: string]: number })
-                ).map(([category, amount]) => (
-                  <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                    <span className="text-sm text-gray-700">{category}</span>
-                    <span className="text-sm font-medium text-[#562900]">
-                      ${amount.toLocaleString()}
-                    </span>
+                {savings.map((entry) => (
+                  <div key={entry._id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700">{entry.name}</span>
+                      <span className="text-xs text-gray-500">{entry.category.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[#562900]">
+                        ${Number(entry.amount).toLocaleString()}
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(entry, 'SAVING')}
+                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit entry"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(entry._id, 'SAVING')}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete entry"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

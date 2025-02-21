@@ -8,7 +8,6 @@ export const useEditDelete = (fetchData: () => void) => {
 
   const handleDelete = async (id: string, type: CategoryType) => {
     try {
-      console.log("in the handle delete: ", id, type);
       await deleteEntry(id);  // Unified delete function
       fetchData(); // Refresh data after deletion
     } catch (error) {
