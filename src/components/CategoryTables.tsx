@@ -3,18 +3,32 @@ import { Entry } from '../types/entryTypes';
 
 interface CategoryTablesProps {
   entries: Entry[];
-  entryType: 'IN' | 'OUT';
-  handleEdit: (entry: Entry, entryType: 'IN' | 'OUT') => void;
-  handleDelete: (id: string, type: 'IN' | 'OUT') => void;
+  entryType: 'INCOME' | 'EXPENSE' | 'SAVING';
+  handleEdit: (entry: Entry, entryType: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
+  handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
+  onAddToCategory: (categoryId: string, categoryName: string) => void;
 }
+
+const getTypeStyles = (type: 'INCOME' | 'EXPENSE' | 'SAVING') => {
+  switch (type) {
+    case 'INCOME':
+      return { bg: 'bg-green-50', text: 'text-green-700', amount: 'text-green-600' };
+    case 'EXPENSE':
+      return { bg: 'bg-red-50', text: 'text-red-700', amount: 'text-red-600' };
+    case 'SAVING':
+      return { bg: 'bg-blue-50', text: 'text-blue-700', amount: 'text-blue-600' };
+  }
+};
 
 const CategoryTables: React.FC<CategoryTablesProps> = ({
   entries,
   entryType,
   handleEdit,
   handleDelete,
+  onAddToCategory,
 }) => {
   const groupedEntries = entries.reduce((acc, entry) => {
+    if (!entry.category?.name) return acc;
     const categoryName = entry.category.name;
     if (!acc[categoryName]) {
       acc[categoryName] = [];
@@ -22,6 +36,8 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
     acc[categoryName].push(entry);
     return acc;
   }, {} as { [key: string]: Entry[] });
+
+  const styles = getTypeStyles(entryType);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -31,12 +47,20 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
         return (
           <div key={categoryName} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             {/* Category Header */}
-            <div className={`px-4 py-3 ${entryType === 'IN' ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`px-4 py-3 ${styles.bg}`}>
               <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-gray-900">{categoryName}</h3>
-                <span className={`text-sm font-medium ${
-                  entryType === 'IN' ? 'text-green-700' : 'text-red-700'
-                }`}>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900">{categoryName}</h3>
+                  <button
+                    onClick={() => onAddToCategory(categoryEntries[0].category._id, categoryName)}
+                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <span className={`text-sm font-medium ${styles.text}`}>
                   ${totalAmount.toLocaleString()}
                 </span>
               </div>
@@ -51,20 +75,43 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
                     className="p-3 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-sm font-medium text-gray-900">
-                        {entry.name}
-                      </span>
-                      <span className={`text-sm font-medium ${
-                        entryType === 'IN' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {entry.name}
+                        </span>
+                        {entry.dueDayOfMonth && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            Due: Day {entry.dueDayOfMonth}
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-sm font-medium ${styles.amount}`}>
                         ${Number(entry.amount).toLocaleString()}
                       </span>
                     </div>
                     
+                    <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex gap-2 text-xs text-gray-500">
+                        <span>{entry.recurrence.toLowerCase()}</span>
+                        {entry.flexibility && (
+                          <span>• {entry.flexibility.toLowerCase()}</span>
+                        )}
+                      </div>
+                      {entry.tags && entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {entry.tags.map(tag => (
+                            <span 
+                              key={tag} 
+                              className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
+                            >
+                              {tag.toLowerCase()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
-                        {new Date(entry.date).toLocaleDateString()}
-                      </span>
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(entry, entryType)}

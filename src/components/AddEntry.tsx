@@ -1,23 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";  
 import api from "../services/axios";
-import { Category } from "../types/categoryTypes";
-import { useBudget } from "../contexts/BudgetContext";
+import { Category, CategoryType } from "../types/categoryTypes";
+import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";   
 
 interface AddEntryProps {
   onAdd: () => void;
   categories: Category[];
   isOpen: boolean;
   onClose: () => void;
+  budgetId: string;
+  preselectedType?: CategoryType;
+  preselectedCategoryId?: string;
+  disableTypeSelection?: boolean;
+  disableCategorySelection?: boolean;
 }
 
-const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose }) => {
+const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId, preselectedType, preselectedCategoryId, disableTypeSelection = false, disableCategorySelection = false }) => {
+
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedType, setSelectedType] = useState<"" | "IN" | "OUT" | "SAVINGS">("");
+  const [selectedType, setSelectedType] = useState<"" | CategoryType>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [customCategoryMode, setCustomCategoryMode] = useState(false);
   const [customCategoryName, setCustomCategoryName] = useState("");
-  const { currentBudgetId } = useBudget();
+  const [dueDayOfMonth, setDueDayOfMonth] = useState<string>("");
+  const [flexibility, setFlexibility] = useState<EntryFlexibility>("FIXED");
+  const [recurrence, setRecurrence] = useState<EntryRecurrence>("MONTHLY");
+  const [tags, setTags] = useState<EntryTags[]>([]);
+
+  useEffect(() => {
+    if (preselectedType) {
+      setSelectedType(preselectedType);
+      
+      // Automatically select the first category for INCOME or SAVING
+      if (preselectedType === 'INCOME' || preselectedType === 'SAVING') {
+        const matchingCategories = categories.filter(cat => cat.type === preselectedType);
+        if (matchingCategories.length > 0) {
+          setSelectedCategoryId(matchingCategories[0]._id);
+        }
+      }
+    }
+  }, [preselectedType, categories]);
+
+  useEffect(() => {
+    if (preselectedCategoryId) {
+      setSelectedCategoryId(preselectedCategoryId);
+    }
+  }, [preselectedCategoryId]);
 
   const resetForm = () => {
     setName("");
@@ -26,6 +55,18 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
     setSelectedCategoryId("");
     setCustomCategoryMode(false);
     setCustomCategoryName("");
+    setDueDayOfMonth("");
+    setFlexibility("FIXED");
+    setRecurrence("MONTHLY");
+    setTags([]);
+  };
+
+  const handleTagToggle = (tag: EntryTags) => {
+    setTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,15 +88,16 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
         categoryId = categoryResponse.data._id;
       }
 
-      // Updated payload structure to match the schema
-      const payload = {
+      const payload: CreateEntryPayload = {
         name: name.trim(),
         amount: parseFloat(amount),
-        category: {
-          name: customCategoryMode ? customCategoryName : categories.find(c => c._id === categoryId)?.name,
-          type: selectedType
-        },
-        budget: currentBudgetId
+        categoryId: categoryId,
+        budgetId: budgetId,
+        type: selectedType,
+        ...(dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
+        flexibility,
+        recurrence,
+        tags,
       };
 
       console.log('Submitting entry with payload:', payload);
@@ -98,13 +140,15 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
             </label>
             <select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as "IN" | "OUT" | "SAVINGS")}
+              onChange={(e) => setSelectedType(e.target.value as CategoryType)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              disabled={disableTypeSelection}
             >
               <option value="">Select type</option>
-              <option value="IN">Income</option>
-              <option value="OUT">Expense</option>
+              <option value="INCOME">Income</option>
+              <option value="EXPENSE">Expense</option>
+              <option value="SAVING">Saving</option>
             </select>
           </div>
 
@@ -137,45 +181,120 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose 
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Category
-              </label>
-              <button
-                type="button"
-                onClick={() => setCustomCategoryMode(!customCategoryMode)}
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                {customCategoryMode ? "Select existing" : "Create new"}
-              </button>
-            </div>
-            
-            {customCategoryMode ? (
-              <input
-                type="text"
-                value={customCategoryName}
-                onChange={(e) => setCustomCategoryName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="New category name"
-                required
-              />
-            ) : (
-              <select
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select category</option>
-                {categories
-                  .filter((cat) => cat.type === selectedType)
-                  .map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.name}
-                    </option>
-                  ))}
-              </select>
+            {selectedType === 'EXPENSE' && (
+              <>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category
+                  </label>
+                  {!disableCategorySelection && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomCategoryMode(!customCategoryMode)}
+                      className="text-sm text-blue-600 hover:text-blue-500"
+                    >
+                      {customCategoryMode ? "Select existing" : "Create new"}
+                    </button>
+                  )}
+                </div>
+                
+                {customCategoryMode ? (
+                  <input
+                    type="text"
+                    value={customCategoryName}
+                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="New category name"
+                    required
+                  />
+                ) : (
+                  <select
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    disabled={disableCategorySelection}
+                  >
+                    <option value="">Select category</option>
+                    {categories
+                      .filter((cat) => cat.type === selectedType)
+                      .map((category) => (
+                        <option key={category._id} value={category._id}>
+                          {category.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+              </>
             )}
+          </div>
+
+          {selectedType === 'EXPENSE' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Due Day of Month
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={dueDayOfMonth}
+                  onChange={(e) => setDueDayOfMonth(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Recurrence
+                </label>
+                <select
+                  value={recurrence}
+                  onChange={(e) => setRecurrence(e.target.value as EntryRecurrence)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="MONTHLY">Monthly</option>
+                  <option value="QUARTERLY">Quarterly</option>
+                  <option value="YEARLY">Yearly</option>
+                  <option value="ONE_TIME">One Time</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tags
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                'HOUSING',
+                'UTILITIES',
+                'TRANSPORTATION',
+                'FOOD',
+                'DEBT',
+                'INSURANCE',
+                'SUBSCRIPTION',
+                'ENTERTAINMENT',
+                'MEDICAL',
+                'MISC'
+              ].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag as EntryTags)}
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    tags.includes(tag as EntryTags)
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {tag.toLowerCase()}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">

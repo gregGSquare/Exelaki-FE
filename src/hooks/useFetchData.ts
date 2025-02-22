@@ -7,8 +7,13 @@ export const useFetchData = (budgetId: string) => {
 
   const fetchData = async () => {
     try {
-      const fetchedEntries = await fetchEntries(budgetId); // Pass budgetId to fetch relevant entries
-      setEntries(fetchedEntries);
+      const fetchedEntries = await fetchEntries(budgetId);
+      // Map categoryId to category
+      const mappedEntries = fetchedEntries.map((entry: Entry) => ({
+        ...entry,
+        category: entry.categoryId
+      }));
+      setEntries(mappedEntries);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -20,8 +25,9 @@ export const useFetchData = (budgetId: string) => {
     }
   }, [budgetId]);
 
-  const incomes = entries.filter(entry => entry.category.type === 'IN');
-  const expenses = entries.filter(entry => entry.category.type === 'OUT');
+  const incomes = entries.filter(entry => entry.category?.type === 'INCOME');
+  const expenses = entries.filter(entry => entry.category?.type === 'EXPENSE');
+  const savings = entries.filter(entry => entry.category?.type === 'SAVING');
 
-  return { entries, incomes, expenses, fetchData, setEntries };
+  return { entries, incomes, expenses, savings, fetchData, setEntries };
 };

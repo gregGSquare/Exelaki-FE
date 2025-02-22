@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { deleteEntry, editEntry } from "../services/dashBoardService";
 import { Entry } from "../types/entryTypes";
+import { CategoryType } from "../types/categoryTypes";
 
 export const useEditDelete = (fetchData: () => void) => {
   const [editEntryState, setEditEntryState] = useState<Entry | null>(null);
 
-  const handleDelete = async (id: string, type: "IN" | "OUT") => {
+  const handleDelete = async (id: string, type: CategoryType) => {
     try {
-      console.log("in the handle delete: ", id, type);
       await deleteEntry(id);  // Unified delete function
       fetchData(); // Refresh data after deletion
     } catch (error) {
@@ -15,8 +15,8 @@ export const useEditDelete = (fetchData: () => void) => {
     }
   };
 
-  const handleEdit = (entry: Entry, entryType: "IN" | "OUT") => {
-    setEditEntryState({ ...entry, type: entryType });
+  const handleEdit = (entry: Entry, entryType: CategoryType) => {
+    setEditEntryState({ ...entry, category: { type: entryType, _id: entry.category._id, name: entry.category.name, user: entry.category.user } });
   };
 
   const handleEditSubmit = async () => {

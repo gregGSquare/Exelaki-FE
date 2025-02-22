@@ -1,9 +1,10 @@
 import React from 'react';
 import { Entry } from '../types/entryTypes';
+import { CategoryType } from '../types/categoryTypes';
 
 interface CategorySummaryProps {
   entries: Entry[];
-  type: 'IN' | 'OUT';
+  type: CategoryType;
 }
 
 const CategorySummary: React.FC<CategorySummaryProps> = ({ entries, type }) => {
@@ -22,7 +23,7 @@ const CategorySummary: React.FC<CategorySummaryProps> = ({ entries, type }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-6">
       <h2 className="text-lg font-semibold mb-4">
-        {type === 'IN' ? 'Income' : 'Expense'} Summary
+        {type === 'INCOME' ? 'Income' : type === 'EXPENSE' ? 'Expense' : 'Saving'} Summary
       </h2>
       <div className="space-y-3">
         {Object.entries(categorySums).map(([category, amount]) => (
@@ -30,7 +31,7 @@ const CategorySummary: React.FC<CategorySummaryProps> = ({ entries, type }) => {
             <span className="text-gray-700">{category}</span>
             <div className="flex items-center">
               <span className={`font-medium ${
-                type === 'IN' ? 'text-green-600' : 'text-red-600'
+                type === 'INCOME' ? 'text-green-600' : 'text-red-600'
               }`}>
                 ${amount.toLocaleString()}
               </span>
@@ -43,7 +44,7 @@ const CategorySummary: React.FC<CategorySummaryProps> = ({ entries, type }) => {
         <div className="border-t pt-2 mt-2">
           <div className="flex justify-between items-center font-semibold">
             <span>Total</span>
-            <span className={type === 'IN' ? 'text-green-600' : 'text-red-600'}>
+            <span className={type === 'INCOME' ? 'text-green-600' : 'text-red-600'}>
               ${totalAmount.toLocaleString()}
             </span>
           </div>

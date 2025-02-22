@@ -1,6 +1,8 @@
 export interface Category {
   _id: string;
   name: string;
-  type: "IN" | "OUT";
+  type: CategoryType;
   user: string | null;
 }
+
+export type CategoryType = "INCOME" | "EXPENSE" | "SAVING";
