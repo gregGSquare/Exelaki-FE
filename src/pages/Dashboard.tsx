@@ -10,6 +10,8 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/axios";
 import CategorySummary from '../components/CategorySummary';
 import { fetchFinancialIndicators } from "../services/dashBoardService";
+import { Entry, EntryTags, ExpenseDistribution } from "../types/entryTypes";
+import ExpensePieChart from "../components/ExpensePieChart";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -38,7 +40,8 @@ const Dashboard: React.FC = () => {
     debtToIncomeRatio: { value: "0%", status: "GOOD" },
     savingsRate: { value: "0%", status: "GOOD" },
     carCostRatio: { value: "0%", status: "GOOD" },
-    homeCostRatio: { value: "0%", status: "GOOD" }
+    homeCostRatio: { value: "0%", status: "GOOD" },
+    expenseDistribution: [] as ExpenseDistribution[]
   });
 
   useEffect(() => {
@@ -355,15 +358,18 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Placeholder for Quick Analytics */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Quick Analytics</h3>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-              <p className="text-sm text-gray-500">Coming Soon</p>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Expense Distribution</h3>
+            <div className="h-64">
+              {financialIndicators.expenseDistribution.length > 0 ? (
+                <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />
+              ) : (
+                <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
+                  <p className="text-sm text-gray-500">No expense data available</p>
+                </div>
+              )}
             </div>
           </div>
-
-          
         </div>
 
         {/* Right Column - Transactions */}

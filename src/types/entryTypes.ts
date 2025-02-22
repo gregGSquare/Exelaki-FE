@@ -41,3 +41,9 @@ export interface CreateEntryPayload {
   recurrence: EntryRecurrence;
   tags: EntryTags[];
 }
+
+export interface ExpenseDistribution {
+  tag: EntryTags;
+  percentage: number;
+  amount: number;
+}
