@@ -8,11 +8,13 @@ interface Props {
 }
 
 const TotalScoreDisplay: React.FC<Props> = ({ score }) => {
-  const percentage = parseFloat(score.value);
+  const isNA = score.value === 'N/A' || score.value === '0';
+  const percentage = isNA ? 0 : parseFloat(score.value);
   const circumference = 2 * Math.PI * 47; // For a circle with r=47
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   const getStatusColor = (status: string) => {
+    if (isNA) return 'stroke-gray-300';
     switch (status) {
       case 'EXCELLENT': return 'stroke-emerald-500';
       case 'GOOD': return 'stroke-green-500';
@@ -20,47 +22,52 @@ const TotalScoreDisplay: React.FC<Props> = ({ score }) => {
       case 'OK': return 'stroke-yellow-500';
       case 'NEEDS_IMPROVEMENT':
       case 'BAD': return 'stroke-red-500';
-      default: return 'stroke-gray-500';
+      default: return 'stroke-gray-300';
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
-      <div className="relative w-32 h-32">
-        {/* Background circle */}
-        <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
-          <circle
-            cx="50"
-            cy="50"
-            r="47"
-            className="stroke-gray-200"
-            strokeWidth="6"
-            fill="none"
-          />
-          {/* Progress circle */}
-          <circle
-            cx="50"
-            cy="50"
-            r="47"
-            className={getStatusColor(score.status)}
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            style={{
-              strokeDasharray: circumference,
-              strokeDashoffset: strokeDashoffset,
-              transition: 'stroke-dashoffset 0.5s ease'
-            }}
-          />
-        </svg>
-        {/* Center text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-gray-700">{score.value}%</span>
-          <span className="text-xs text-gray-500">Total Score</span>
+    <>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Financial Health Overview</h3>
+      <div className="flex flex-col items-center justify-center p-4">
+        <div className="relative w-32 h-32">
+          {/* Background circle */}
+          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+            <circle
+              cx="50"
+              cy="50"
+              r="47"
+              className="stroke-gray-200"
+              strokeWidth="6"
+              fill="none"
+            />
+            {/* Progress circle */}
+            <circle
+              cx="50"
+              cy="50"
+              r="47"
+              className={getStatusColor(score.status)}
+              strokeWidth="6"
+              fill="none"
+              strokeLinecap="round"
+              style={{
+                strokeDasharray: circumference,
+                strokeDashoffset: strokeDashoffset,
+                transition: 'stroke-dashoffset 0.5s ease'
+              }}
+            />
+          </svg>
+          {/* Center text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-gray-700">
+              {isNA ? 'N/A' : `${score.value}`}
+            </span>
+            <span className="text-xs text-gray-500">Total Score</span>
+          </div>
         </div>
+        <div className="mt-2 text-xs text-gray-500">Target: 100%</div>
       </div>
-      <div className="mt-2 text-xs text-gray-500">Target: 100%</div>
-    </div>
+    </>
   );
 };
 

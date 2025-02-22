@@ -30,18 +30,20 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const [tags, setTags] = useState<EntryTags[]>([]);
 
   useEffect(() => {
-    if (preselectedType) {
-      setSelectedType(preselectedType);
-      
-      // Automatically select the first category for INCOME or SAVING
-      if (preselectedType === 'INCOME' || preselectedType === 'SAVING') {
-        const matchingCategories = categories.filter(cat => cat.type === preselectedType);
-        if (matchingCategories.length > 0) {
-          setSelectedCategoryId(matchingCategories[0]._id);
+    if (isOpen) {  // Only set when modal opens
+      if (preselectedType) {
+        setSelectedType(preselectedType);
+        
+        // Automatically select the first category for INCOME or SAVING
+        if (preselectedType === 'INCOME' || preselectedType === 'SAVING') {
+          const matchingCategories = categories.filter(cat => cat.type === preselectedType);
+          if (matchingCategories.length > 0) {
+            setSelectedCategoryId(matchingCategories[0]._id);
+          }
         }
       }
     }
-  }, [preselectedType, categories]);
+  }, [preselectedType, categories, isOpen]);  // Added isOpen to dependencies
 
   useEffect(() => {
     if (preselectedCategoryId) {
@@ -73,7 +75,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedType || !name || !amount || (!selectedCategoryId && !customCategoryName)) {
+    if (!selectedType || !name || !amount) {
       console.error("Missing required fields");
       return;
     }
@@ -81,6 +83,20 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
     try {
       let categoryId = selectedCategoryId;
       
+      // For INCOME and SAVING, automatically use the first category of that type
+      if (selectedType === 'INCOME' || selectedType === 'SAVING') {
+        const matchingCategories = categories.filter(cat => cat.type === selectedType);
+        if (matchingCategories.length > 0) {
+          categoryId = matchingCategories[0]._id;
+        }
+      }
+      
+      // For EXPENSE, require category selection
+      if (selectedType === 'EXPENSE' && !categoryId && !customCategoryMode) {
+        console.error("Category is required for expenses");
+        return;
+      }
+
       if (customCategoryMode && customCategoryName) {
         const categoryResponse = await api.post('/categories', {
           name: customCategoryName,
@@ -95,20 +111,17 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
         categoryId: categoryId,
         budgetId: budgetId,
         type: selectedType,
-        ...(dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
-        flexibility,
-        recurrence,
-        tags,
+        flexibility: selectedType === 'EXPENSE' ? flexibility : "FIXED",
+        recurrence: selectedType === 'EXPENSE' ? recurrence : "MONTHLY",
+        tags: selectedType === 'EXPENSE' ? tags : [EntryTags.MISC],
+        ...(selectedType === 'EXPENSE' && dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
       };
-
-      console.log('Submitting entry with payload:', payload);
 
       const response = await api.post("/entries", payload);
       
       if (response.status === 201 || response.status === 200) {
-        console.log('Entry created successfully:', response.data);
         resetForm();
-        onAdd();
+        await onAdd();
         onClose();
       }
     } catch (error: any) {
@@ -164,6 +177,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Entry name"
               required
             />
           </div>
@@ -176,10 +190,9 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              placeholder="0.00"
               required
-              min="0"
-              step="0.01"
             />
           </div>
 
@@ -270,7 +283,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
           )}
 
           {/* Only show tags for expenses */}
-          {!hideTags && (
+          {selectedType === 'EXPENSE' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tags
