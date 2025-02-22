@@ -2,20 +2,24 @@ import { useState } from "react";
 import { deleteEntry, editEntry } from "../services/dashBoardService";
 import { Entry } from "../types/entryTypes";
 import { CategoryType } from "../types/categoryTypes";
+import { loadFinancialIndicators } from "../services/financialIndicatorsService";
 
-export const useEditDelete = (fetchData: () => void) => {
+export const useEditDelete = (fetchData: () => void, budgetId: string, setFinancialIndicators: (indicators: any) => void) => {
   const [editEntryState, setEditEntryState] = useState<Entry | null>(null);
 
   const handleDelete = async (id: string, type: CategoryType) => {
     try {
       await deleteEntry(id);  // Unified delete function
-      fetchData(); // Refresh data after deletion
+      await fetchData(); // Refresh data after deletion
+      const indicators = await loadFinancialIndicators(budgetId);
+      setFinancialIndicators(indicators);
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
     }
   };
 
   const handleEdit = (entry: Entry, entryType: CategoryType) => {
+    console.log('entry + entryType', entry, entryType);
     setEditEntryState({ ...entry, category: { type: entryType, _id: entry.category._id, name: entry.category.name, user: entry.category.user } });
   };
 
@@ -23,9 +27,17 @@ export const useEditDelete = (fetchData: () => void) => {
     if (!editEntryState) return;
 
     try {
-      await editEntry(editEntryState._id, editEntryState); // Unified edit function
+      const payload = {
+        ...editEntryState,
+        type: editEntryState.category.type,
+        categoryId: editEntryState.category._id
+      };
+      
+      await editEntry(editEntryState._id, payload);
       setEditEntryState(null);
-      fetchData(); // Refresh data after editing
+      await fetchData();
+      const indicators = await loadFinancialIndicators(budgetId);
+      setFinancialIndicators(indicators);
     } catch (error) {
       console.error("Error editing entry:", error);
     }

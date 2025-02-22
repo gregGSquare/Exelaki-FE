@@ -8,13 +8,11 @@ import CategoryTables from "../components/CategoryTables";
 import { useBudget } from "../contexts/BudgetContext";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/axios";
-import CategorySummary from '../components/CategorySummary';
-import { fetchFinancialIndicators } from "../services/dashBoardService";
-import { Entry, EntryTags, ExpenseDistribution } from "../types/entryTypes";
+import {ExpenseDistribution } from "../types/entryTypes";
 import ExpensePieChart from "../components/ExpensePieChart";
-import FinancialIndicatorBars from "../components/FinancialIndicatorBars";
 import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
 import TotalScoreDisplay from "../components/TotalScoreDisplay";
+import { loadFinancialIndicators } from "../services/financialIndicatorsService";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -24,13 +22,21 @@ const Dashboard: React.FC = () => {
   const [budgetName, setBudgetName] = useState("");
   const { isAuthenticated } = useAuth();
   const { incomes, expenses, savings, fetchData } = useFetchData(budgetId);
+  const [financialIndicators, setFinancialIndicators] = useState({
+    totalScore: { value: "N/A", status: "GOOD" },
+    debtToIncomeRatio: { value: "N/A", status: "GOOD" },
+    savingsRate: { value: "N/A", status: "GOOD" },
+    carCostRatio: { value: "N/A", status: "GOOD" },
+    homeCostRatio: { value: "N/A", status: "GOOD" },
+    expenseDistribution: [] as ExpenseDistribution[]
+  });
   const {
     editEntry,
     handleEdit,
     handleDelete,
     handleEditSubmit,
     setEditEntry,
-  } = useEditDelete(fetchData);
+  } = useEditDelete(fetchData, budgetId, setFinancialIndicators);
   const { incomeCategories, expenseCategories, savingCategories } = useFetchCategories();
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
@@ -38,14 +44,6 @@ const Dashboard: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
-  const [financialIndicators, setFinancialIndicators] = useState({
-    totalScore: { value: "0%", status: "GOOD" },
-    debtToIncomeRatio: { value: "0%", status: "GOOD" },
-    savingsRate: { value: "0%", status: "GOOD" },
-    carCostRatio: { value: "0%", status: "GOOD" },
-    homeCostRatio: { value: "0%", status: "GOOD" },
-    expenseDistribution: [] as ExpenseDistribution[]
-  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -55,9 +53,13 @@ const Dashboard: React.FC = () => {
     }
 
     if (budgetId) {
-      setCurrentBudgetId(budgetId); // Set the current budget in context
-      fetchBudgetName(budgetId); // Fetch budget name to display
-      loadFinancialIndicators();
+      setCurrentBudgetId(budgetId);
+      fetchBudgetName(budgetId);
+      const loadIndicators = async () => {
+        const indicators = await loadFinancialIndicators(budgetId);
+        setFinancialIndicators(indicators);
+      };
+      loadIndicators();
     }
   }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated]);
 
@@ -67,15 +69,6 @@ const Dashboard: React.FC = () => {
       setBudgetName(response.data.name);
     } catch (error) {
       console.error("Error fetching budget name:", error);
-    }
-  };
-
-  const loadFinancialIndicators = async () => {
-    try {
-      const indicators = await fetchFinancialIndicators(budgetId);
-      setFinancialIndicators(indicators);
-    } catch (error) {
-      console.error("Error fetching financial indicators:", error);
     }
   };
 
@@ -345,7 +338,7 @@ const Dashboard: React.FC = () => {
                   type="number"
                   value={editEntry.amount}
                   onChange={(e) => setEditEntry({ ...editEntry, amount: +e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               <div className="flex justify-end space-x-4">
@@ -369,9 +362,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Entry Modal */}
       <AddEntry 
-        onAdd={() => {
-          fetchData();
-          loadFinancialIndicators();
+        onAdd={async () => {
+          await fetchData();
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
         }}
         categories={[...incomeCategories, ...expenseCategories, ...savingCategories]}
         isOpen={isAddEntryModalOpen}
@@ -381,9 +375,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Income Modal */}
       <AddEntry 
-        onAdd={() => {
-          fetchData();
-          loadFinancialIndicators();
+        onAdd={async () => {
+          await fetchData();
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
         }}
         categories={incomeCategories}
         isOpen={isAddIncomeModalOpen}
@@ -396,9 +391,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Saving Modal */}
       <AddEntry 
-        onAdd={() => {
-          fetchData();
-          loadFinancialIndicators();
+        onAdd={async () => {
+          await fetchData();
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
         }}
         categories={savingCategories}
         isOpen={isAddSavingModalOpen}
@@ -411,9 +407,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add to Category Modal */}
       <AddEntry 
-        onAdd={() => {
-          fetchData();
-          loadFinancialIndicators();
+        onAdd={async () => {
+          await fetchData();
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
         }}
         categories={expenseCategories}
         isOpen={isAddToCategoryModalOpen}
@@ -430,9 +427,10 @@ const Dashboard: React.FC = () => {
 
       {/* Add Expense Modal */}
       <AddEntry 
-        onAdd={() => {
-          fetchData();
-          loadFinancialIndicators();
+        onAdd={async () => {
+          await fetchData();
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
         }}
         categories={expenseCategories}
         isOpen={isAddExpenseModalOpen}
