@@ -12,6 +12,7 @@ import CategorySummary from '../components/CategorySummary';
 import { fetchFinancialIndicators } from "../services/dashBoardService";
 import { Entry, EntryTags, ExpenseDistribution } from "../types/entryTypes";
 import ExpensePieChart from "../components/ExpensePieChart";
+import FinancialIndicatorBars from "../components/FinancialIndicatorBars";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -123,7 +124,7 @@ const Dashboard: React.FC = () => {
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Quick Stats */}
           {/* Incomes */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-green-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Income</h3>
@@ -179,7 +180,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           {/* Expenses */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-red-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
@@ -219,7 +220,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           {/* Savings */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-blue-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Savings</h3>
@@ -232,7 +233,7 @@ const Dashboard: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
-                  <span className="text-sm font-medium text-[#562900]">
+                  <span className="text-sm font-medium text-blue-600">
                     Total: ${totalSavings.toLocaleString()}
                   </span>
                 </div>
@@ -245,7 +246,7 @@ const Dashboard: React.FC = () => {
                       <span className="text-xs text-gray-500">{entry.category.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-[#562900]">
+                      <span className="text-sm font-medium text-blue-600">
                         ${Number(entry.amount).toLocaleString()}
                       </span>
                       <div className="flex space-x-2">
@@ -275,87 +276,10 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Placeholder for Financial Health Score */}
+          {/* Placeholder for Financial Indicators Score */}
           <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Financial Health</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Score</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.totalScore.status === 'EXCELLENT'
-                      ? 'text-emerald-600'
-                      : financialIndicators.totalScore.status === 'GOOD'
-                      ? 'text-green-600'
-                      : financialIndicators.totalScore.status === 'ACCEPTABLE'
-                      ? 'text-yellow-600'
-                      : financialIndicators.totalScore.status === 'NO_DATA'
-                      ? 'text-gray-400'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.totalScore.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Debt to Income Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.debtToIncomeRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.debtToIncomeRatio.status === 'WARNING'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.debtToIncomeRatio.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Savings Rate</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.savingsRate.status === 'EXCELLENT'
-                      ? 'text-emerald-600'
-                      : financialIndicators.savingsRate.status === 'GOOD'
-                      ? 'text-green-600'
-                      : financialIndicators.savingsRate.status === 'ACCEPTABLE'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.savingsRate.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Car Cost Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.carCostRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.carCostRatio.status === 'OK'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.carCostRatio.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Home Cost Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.homeCostRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.homeCostRatio.status === 'OK'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.homeCostRatio.value}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Financial Health Indicators</h3>
+            <FinancialIndicatorBars indicators={financialIndicators} />
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-4">
