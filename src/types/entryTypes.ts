@@ -2,7 +2,18 @@ import { Category } from "./categoryTypes";
 
 export type EntryFlexibility = 'FIXED' | 'FLEXIBLE' | 'OPTIONAL';
 export type EntryRecurrence = 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONE_TIME';
-export type EntryTags = 'HOUSING' | 'UTILITIES' | 'TRANSPORTATION' | 'FOOD' | 'DEBT' | 'INSURANCE' | 'SUBSCRIPTION' | 'ENTERTAINMENT' | 'MEDICAL' | 'MISC';
+export enum EntryTags {
+  HOUSING = 'HOUSING',
+  UTILITIES = 'UTILITIES',
+  TRANSPORTATION = 'TRANSPORTATION',
+  FOOD = 'FOOD',
+  DEBT = 'DEBT',
+  INSURANCE = 'INSURANCE',
+  SUBSCRIPTION = 'SUBSCRIPTION',
+  ENTERTAINMENT = 'ENTERTAINMENT',
+  MEDICAL = 'MEDICAL',
+  MISC = 'MISC'
+}
 export type EntryType = 'EXPENSE' | 'INCOME' | 'SAVING';
 
 export interface Entry {
@@ -29,4 +40,10 @@ export interface CreateEntryPayload {
   flexibility: EntryFlexibility;
   recurrence: EntryRecurrence;
   tags: EntryTags[];
+}
+
+export interface ExpenseDistribution {
+  tag: EntryTags;
+  percentage: number;
+  amount: number;
 }

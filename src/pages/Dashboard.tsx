@@ -10,6 +10,11 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/axios";
 import CategorySummary from '../components/CategorySummary';
 import { fetchFinancialIndicators } from "../services/dashBoardService";
+import { Entry, EntryTags, ExpenseDistribution } from "../types/entryTypes";
+import ExpensePieChart from "../components/ExpensePieChart";
+import FinancialIndicatorBars from "../components/FinancialIndicatorBars";
+import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
+import TotalScoreDisplay from "../components/TotalScoreDisplay";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -32,12 +37,14 @@ const Dashboard: React.FC = () => {
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
+  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [financialIndicators, setFinancialIndicators] = useState({
     totalScore: { value: "0%", status: "GOOD" },
     debtToIncomeRatio: { value: "0%", status: "GOOD" },
     savingsRate: { value: "0%", status: "GOOD" },
     carCostRatio: { value: "0%", status: "GOOD" },
-    homeCostRatio: { value: "0%", status: "GOOD" }
+    homeCostRatio: { value: "0%", status: "GOOD" },
+    expenseDistribution: [] as ExpenseDistribution[]
   });
 
   useEffect(() => {
@@ -86,27 +93,33 @@ const Dashboard: React.FC = () => {
     <div className="container mx-auto px-4 py-8 mt-16">
       {/* Financial overview row */}
       <div className="bg-white shadow-sm rounded-lg px-4 py-3 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-xl font-bold">{budgetName}</h1>
-          
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Income</span>
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+          <div className="flex items-center divide-x divide-gray-200">
+            <h1 className="text-xl font-bold pr-6">{budgetName}</h1>
+            
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Income</span>
               <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Expenses</span>
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Expenses</span>
               <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Balance</span>
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Balance</span>
               <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                 ${balance.toLocaleString()}
               </span>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4 w-full lg:w-auto">
+            <div className="flex-grow lg:w-[600px]">
+              <FinancialIndicatorCards indicators={financialIndicators} />
+            </div>
             <button
               onClick={() => setIsAddEntryModalOpen(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm whitespace-nowrap"
             >
               Add Entry
             </button>
@@ -119,7 +132,7 @@ const Dashboard: React.FC = () => {
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Quick Stats */}
           {/* Incomes */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-green-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Income</h3>
@@ -175,13 +188,23 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           {/* Expenses */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="bg-red-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
-                <span className="text-sm font-medium text-red-600">
-                  Total: ${totalExpenses.toLocaleString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAddExpenseModalOpen(true)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                  <span className="text-sm font-medium text-red-600">
+                    Total: ${totalExpenses.toLocaleString()}
+                  </span>
+                </div>
               </div>
               <div className="space-y-2">
                 {Object.entries(
@@ -205,7 +228,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           {/* Savings */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-blue-50/80 rounded-lg shadow p-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Savings</h3>
@@ -218,7 +241,7 @@ const Dashboard: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
-                  <span className="text-sm font-medium text-[#562900]">
+                  <span className="text-sm font-medium text-blue-600">
                     Total: ${totalSavings.toLocaleString()}
                   </span>
                 </div>
@@ -231,7 +254,7 @@ const Dashboard: React.FC = () => {
                       <span className="text-xs text-gray-500">{entry.category.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-[#562900]">
+                      <span className="text-sm font-medium text-blue-600">
                         ${Number(entry.amount).toLocaleString()}
                       </span>
                       <div className="flex space-x-2">
@@ -260,99 +283,23 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Placeholder for Financial Health Score */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Financial Health</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total Score</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.totalScore.status === 'EXCELLENT'
-                      ? 'text-emerald-600'
-                      : financialIndicators.totalScore.status === 'GOOD'
-                      ? 'text-green-600'
-                      : financialIndicators.totalScore.status === 'ACCEPTABLE'
-                      ? 'text-yellow-600'
-                      : financialIndicators.totalScore.status === 'NO_DATA'
-                      ? 'text-gray-400'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.totalScore.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Debt to Income Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.debtToIncomeRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.debtToIncomeRatio.status === 'WARNING'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.debtToIncomeRatio.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Savings Rate</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.savingsRate.status === 'EXCELLENT'
-                      ? 'text-emerald-600'
-                      : financialIndicators.savingsRate.status === 'GOOD'
-                      ? 'text-green-600'
-                      : financialIndicators.savingsRate.status === 'ACCEPTABLE'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.savingsRate.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Car Cost Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.carCostRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.carCostRatio.status === 'OK'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.carCostRatio.value}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Home Cost Ratio</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    financialIndicators.homeCostRatio.status === 'GOOD' 
-                      ? 'text-green-600' 
-                      : financialIndicators.homeCostRatio.status === 'OK'
-                      ? 'text-yellow-600'
-                      : 'text-red-600'
-                  }`}>
-                    {financialIndicators.homeCostRatio.value}
-                  </span>
-                </div>
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <TotalScoreDisplay score={financialIndicators.totalScore} />
+            </div>
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-2">Expense Distribution</h3>
+              <div className="h-64">
+                {financialIndicators.expenseDistribution.length > 0 ? (
+                  <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />
+                ) : (
+                  <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-500">No expense data available</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-
-          {/* Placeholder for Quick Analytics */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Quick Analytics</h3>
-            <div className="h-32 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-              <p className="text-sm text-gray-500">Coming Soon</p>
-            </div>
-          </div>
-
-          
         </div>
 
         {/* Right Column - Transactions */}
@@ -479,6 +426,21 @@ const Dashboard: React.FC = () => {
         preselectedCategoryId={selectedCategory?.id}
         disableTypeSelection={true}
         disableCategorySelection={true}
+      />
+
+      {/* Add Expense Modal */}
+      <AddEntry 
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
+        categories={expenseCategories}
+        isOpen={isAddExpenseModalOpen}
+        onClose={() => setIsAddExpenseModalOpen(false)}
+        budgetId={budgetId}
+        preselectedType="EXPENSE"
+        disableTypeSelection={true}
+        disableCategorySelection={false}
       />
     </div>
   );
