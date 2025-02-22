@@ -33,11 +33,11 @@ const Dashboard: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
   const [financialIndicators, setFinancialIndicators] = useState({
-    totalScore: "0%",
+    totalScore: { value: "0%", status: "GOOD" },
     debtToIncomeRatio: { value: "0%", status: "GOOD" },
-    savingsRate: "0%",
-    carCostRatio: "0%",
-    homeCostRatio: "0%"
+    savingsRate: { value: "0%", status: "GOOD" },
+    carCostRatio: { value: "0%", status: "GOOD" },
+    homeCostRatio: { value: "0%", status: "GOOD" }
   });
 
   useEffect(() => {
@@ -267,9 +267,21 @@ const Dashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Score</span>
-                <span className="text-sm font-medium text-blue-600">
-                  {financialIndicators.totalScore}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    financialIndicators.totalScore.status === 'EXCELLENT'
+                      ? 'text-emerald-600'
+                      : financialIndicators.totalScore.status === 'GOOD'
+                      ? 'text-green-600'
+                      : financialIndicators.totalScore.status === 'ACCEPTABLE'
+                      ? 'text-yellow-600'
+                      : financialIndicators.totalScore.status === 'NO_DATA'
+                      ? 'text-gray-400'
+                      : 'text-red-600'
+                  }`}>
+                    {financialIndicators.totalScore.value}
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Debt to Income Ratio</span>
@@ -287,21 +299,47 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Savings Rate</span>
-                <span className="text-sm font-medium text-green-600">
-                  {financialIndicators.savingsRate}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    financialIndicators.savingsRate.status === 'EXCELLENT'
+                      ? 'text-emerald-600'
+                      : financialIndicators.savingsRate.status === 'GOOD'
+                      ? 'text-green-600'
+                      : financialIndicators.savingsRate.status === 'ACCEPTABLE'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                  }`}>
+                    {financialIndicators.savingsRate.value}
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Car Cost Ratio</span>
-                <span className="text-sm font-medium text-red-600">
-                  {financialIndicators.carCostRatio}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    financialIndicators.carCostRatio.status === 'GOOD' 
+                      ? 'text-green-600' 
+                      : financialIndicators.carCostRatio.status === 'OK'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                  }`}>
+                    {financialIndicators.carCostRatio.value}
+                  </span>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Home Cost Ratio</span>
-                <span className="text-sm font-medium text-[#562900]">
-                  {financialIndicators.homeCostRatio}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    financialIndicators.homeCostRatio.status === 'GOOD' 
+                      ? 'text-green-600' 
+                      : financialIndicators.homeCostRatio.status === 'OK'
+                      ? 'text-yellow-600'
+                      : 'text-red-600'
+                  }`}>
+                    {financialIndicators.homeCostRatio.value}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
