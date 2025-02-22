@@ -32,6 +32,7 @@ const Dashboard: React.FC = () => {
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
+  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [financialIndicators, setFinancialIndicators] = useState({
     totalScore: { value: "0%", status: "GOOD" },
     debtToIncomeRatio: { value: "0%", status: "GOOD" },
@@ -179,9 +180,19 @@ const Dashboard: React.FC = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
-                <span className="text-sm font-medium text-red-600">
-                  Total: ${totalExpenses.toLocaleString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAddExpenseModalOpen(true)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                  <span className="text-sm font-medium text-red-600">
+                    Total: ${totalExpenses.toLocaleString()}
+                  </span>
+                </div>
               </div>
               <div className="space-y-2">
                 {Object.entries(
@@ -479,6 +490,21 @@ const Dashboard: React.FC = () => {
         preselectedCategoryId={selectedCategory?.id}
         disableTypeSelection={true}
         disableCategorySelection={true}
+      />
+
+      {/* Add Expense Modal */}
+      <AddEntry 
+        onAdd={() => {
+          fetchData();
+          loadFinancialIndicators();
+        }}
+        categories={expenseCategories}
+        isOpen={isAddExpenseModalOpen}
+        onClose={() => setIsAddExpenseModalOpen(false)}
+        budgetId={budgetId}
+        preselectedType="EXPENSE"
+        disableTypeSelection={true}
+        disableCategorySelection={false}
       />
     </div>
   );

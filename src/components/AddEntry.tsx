@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";  
 import api from "../services/axios";
 import { Category, CategoryType } from "../types/categoryTypes";
-import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";   
+import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";
 
 interface AddEntryProps {
   onAdd: () => void;
@@ -13,9 +13,10 @@ interface AddEntryProps {
   preselectedCategoryId?: string;
   disableTypeSelection?: boolean;
   disableCategorySelection?: boolean;
+  hideTags?: boolean;
 }
 
-const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId, preselectedType, preselectedCategoryId, disableTypeSelection = false, disableCategorySelection = false }) => {
+const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId, preselectedType, preselectedCategoryId, disableTypeSelection = false, disableCategorySelection = false, hideTags = false }) => {
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -141,7 +142,9 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as CategoryType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                disableTypeSelection ? 'bg-gray-100 text-gray-500 appearance-none cursor-not-allowed' : ''
+              }`}
               required
               disabled={disableTypeSelection}
             >
@@ -211,7 +214,9 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
                   <select
                     value={selectedCategoryId}
                     onChange={(e) => setSelectedCategoryId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      disableCategorySelection ? 'bg-gray-100 text-gray-500 appearance-none cursor-not-allowed' : ''
+                    }`}
                     required
                     disabled={disableCategorySelection}
                   >
@@ -264,38 +269,30 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
             </>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'HOUSING',
-                'UTILITIES',
-                'TRANSPORTATION',
-                'FOOD',
-                'DEBT',
-                'INSURANCE',
-                'SUBSCRIPTION',
-                'ENTERTAINMENT',
-                'MEDICAL',
-                'MISC'
-              ].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => handleTagToggle(tag as EntryTags)}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    tags.includes(tag as EntryTags)
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {tag.toLowerCase()}
-                </button>
-              ))}
+          {/* Only show tags for expenses */}
+          {!hideTags && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tags
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {Object.values(EntryTags).map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleTagToggle(tag)}
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      tags.includes(tag)
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {tag.toLowerCase()}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex justify-end space-x-3 pt-4">
             <button
