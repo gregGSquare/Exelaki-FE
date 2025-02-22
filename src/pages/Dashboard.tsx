@@ -13,6 +13,8 @@ import { fetchFinancialIndicators } from "../services/dashBoardService";
 import { Entry, EntryTags, ExpenseDistribution } from "../types/entryTypes";
 import ExpensePieChart from "../components/ExpensePieChart";
 import FinancialIndicatorBars from "../components/FinancialIndicatorBars";
+import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
+import TotalScoreDisplay from "../components/TotalScoreDisplay";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -91,27 +93,33 @@ const Dashboard: React.FC = () => {
     <div className="container mx-auto px-4 py-8 mt-16">
       {/* Financial overview row */}
       <div className="bg-white shadow-sm rounded-lg px-4 py-3 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-xl font-bold">{budgetName}</h1>
-          
-          <div className="flex flex-wrap items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Income</span>
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+          <div className="flex items-center divide-x divide-gray-200">
+            <h1 className="text-xl font-bold pr-6">{budgetName}</h1>
+            
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Income</span>
               <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Expenses</span>
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Expenses</span>
               <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Balance</span>
+            <div className="px-6">
+              <span className="text-sm text-gray-500 block">Balance</span>
               <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                 ${balance.toLocaleString()}
               </span>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4 w-full lg:w-auto">
+            <div className="flex-grow lg:w-[600px]">
+              <FinancialIndicatorCards indicators={financialIndicators} />
+            </div>
             <button
               onClick={() => setIsAddEntryModalOpen(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm whitespace-nowrap"
             >
               Add Entry
             </button>
@@ -275,23 +283,21 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Placeholder for Financial Indicators Score */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Financial Health Indicators</h3>
-            <FinancialIndicatorBars indicators={financialIndicators} />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Expense Distribution</h3>
-            <div className="h-64">
-              {financialIndicators.expenseDistribution.length > 0 ? (
-                <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />
-              ) : (
-                <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                  <p className="text-sm text-gray-500">No expense data available</p>
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <TotalScoreDisplay score={financialIndicators.totalScore} />
+            </div>
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-2">Expense Distribution</h3>
+              <div className="h-64">
+                {financialIndicators.expenseDistribution.length > 0 ? (
+                  <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />
+                ) : (
+                  <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-500">No expense data available</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
