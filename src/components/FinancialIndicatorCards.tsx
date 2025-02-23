@@ -53,7 +53,7 @@ const IndicatorCard: React.FC<{
 
 const FinancialIndicatorCards: React.FC<Props> = ({ indicators }) => {
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
       <IndicatorCard
         label="Debt to Income"
         value={indicators.debtToIncomeRatio.value}
