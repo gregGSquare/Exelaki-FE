@@ -38,7 +38,6 @@ const Dashboard: React.FC = () => {
     setEditEntry,
   } = useEditDelete(fetchData, budgetId, setFinancialIndicators);
   const { incomeCategories, expenseCategories, savingCategories } = useFetchCategories();
-  const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
@@ -85,37 +84,31 @@ const Dashboard: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 mt-16">
       {/* Financial overview row */}
-      <div className="bg-white shadow-sm rounded-lg px-4 py-3 mb-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
-          <div className="flex items-center divide-x divide-gray-200">
-            <h1 className="text-xl font-bold pr-6">{budgetName}</h1>
-            
-            <div className="px-6">
-              <span className="text-sm text-gray-500 block">Income</span>
-              <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
+      <div className="bg-white shadow-sm rounded-lg px-2 sm:px-4 py-3 mb-6 overflow-x-auto">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-xl font-bold">{budgetName}</h1>
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex items-center divide-x divide-gray-200 lg:w-1/3">
+              <div className="pr-6">
+                <span className="text-sm text-gray-500 block">Income</span>
+                <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
+              </div>
+              <div className="px-6">
+                <span className="text-sm text-gray-500 block">Expenses</span>
+                <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
+              </div>
+              <div className="px-6">
+                <span className="text-sm text-gray-500 block">Balance</span>
+                <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  ${balance.toLocaleString()}
+                </span>
+              </div>
             </div>
-            <div className="px-6">
-              <span className="text-sm text-gray-500 block">Expenses</span>
-              <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
-            </div>
-            <div className="px-6">
-              <span className="text-sm text-gray-500 block">Balance</span>
-              <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                ${balance.toLocaleString()}
-              </span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-4 w-full lg:w-auto">
-            <div className="flex-grow lg:w-[600px]">
+            <div className="md:w-2/3">
               <FinancialIndicatorCards indicators={financialIndicators} />
             </div>
-            <button
-              onClick={() => setIsAddEntryModalOpen(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm whitespace-nowrap"
-            >
-              Add Entry
-            </button>
           </div>
         </div>
       </div>
@@ -359,19 +352,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Add Entry Modal */}
-      <AddEntry 
-        onAdd={async () => {
-          await fetchData();
-          const indicators = await loadFinancialIndicators(budgetId);
-          setFinancialIndicators(indicators);
-        }}
-        categories={[...incomeCategories, ...expenseCategories, ...savingCategories]}
-        isOpen={isAddEntryModalOpen}
-        onClose={() => setIsAddEntryModalOpen(false)}
-        budgetId={budgetId}
-      />
 
       {/* Add Income Modal */}
       <AddEntry 
