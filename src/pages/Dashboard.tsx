@@ -13,12 +13,13 @@ import ExpensePieChart from "../components/ExpensePieChart";
 import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
 import TotalScoreDisplay from "../components/TotalScoreDisplay";
 import { loadFinancialIndicators } from "../services/financialIndicatorsService";
+import { formatCurrency } from "../utils/currency";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const budgetId = id || "";
-  const { setCurrentBudgetId } = useBudget();
+  const { setCurrentBudgetId, setCurrentCurrencyCode, currentCurrencyCode } = useBudget();
   const [budgetName, setBudgetName] = useState("");
   const { isAuthenticated } = useAuth();
   const { incomes, expenses, savings, fetchData } = useFetchData(budgetId);
@@ -53,21 +54,22 @@ const Dashboard: React.FC = () => {
 
     if (budgetId) {
       setCurrentBudgetId(budgetId);
-      fetchBudgetName(budgetId);
+      fetchBudgetDetails(budgetId);
       const loadIndicators = async () => {
         const indicators = await loadFinancialIndicators(budgetId);
         setFinancialIndicators(indicators);
       };
       loadIndicators();
     }
-  }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated]);
+  }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated, setCurrentCurrencyCode]);
 
-  const fetchBudgetName = async (budgetId: string) => {
+  const fetchBudgetDetails = async (budgetId: string) => {
     try {
       const response = await api.get(`/budget/${budgetId}`);
       setBudgetName(response.data.name);
+      setCurrentCurrencyCode(response.data.currency || "USD");
     } catch (error) {
-      console.error("Error fetching budget name:", error);
+      console.error("Error fetching budget details:", error);
     }
   };
 
@@ -92,16 +94,20 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center divide-x divide-gray-200 lg:w-1/3">
               <div className="pr-6">
                 <span className="text-sm text-gray-500 block">Income</span>
-                <span className="text-sm font-medium text-green-600">${totalIncome.toLocaleString()}</span>
+                <span className="text-sm font-medium text-green-600">
+                  {formatCurrency(totalIncome, currentCurrencyCode)}
+                </span>
               </div>
               <div className="px-6">
                 <span className="text-sm text-gray-500 block">Expenses</span>
-                <span className="text-sm font-medium text-red-600">${totalExpenses.toLocaleString()}</span>
+                <span className="text-sm font-medium text-red-600">
+                  {formatCurrency(totalExpenses, currentCurrencyCode)}
+                </span>
               </div>
               <div className="px-6">
                 <span className="text-sm text-gray-500 block">Balance</span>
                 <span className={`text-sm font-medium ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  ${balance.toLocaleString()}
+                  {formatCurrency(balance, currentCurrencyCode)}
                 </span>
               </div>
             </div>
@@ -132,7 +138,7 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
                   <span className="text-sm font-medium text-green-600">
-                    Total: ${totalIncome.toLocaleString()}
+                    Total: {formatCurrency(totalIncome, currentCurrencyCode)}
                   </span>
                 </div>
               </div>
@@ -145,7 +151,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-green-600">
-                        ${Number(entry.amount).toLocaleString()}
+                        {formatCurrency(Number(entry.amount), currentCurrencyCode)}
                       </span>
                       <div className="flex space-x-2">
                         <button
@@ -188,7 +194,7 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
                   <span className="text-sm font-medium text-red-600">
-                    Total: ${totalExpenses.toLocaleString()}
+                    Total: {formatCurrency(totalExpenses, currentCurrencyCode)}
                   </span>
                 </div>
               </div>
@@ -206,7 +212,7 @@ const Dashboard: React.FC = () => {
                   <div key={category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                     <span className="text-sm text-gray-700">{category}</span>
                     <span className="text-sm font-medium text-red-600">
-                      ${amount.toLocaleString()}
+                      {formatCurrency(amount, currentCurrencyCode)}
                     </span>
                   </div>
                 ))}
@@ -228,7 +234,7 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
                   <span className="text-sm font-medium text-blue-600">
-                    Total: ${totalSavings.toLocaleString()}
+                    Total: {formatCurrency(totalSavings, currentCurrencyCode)}
                   </span>
                 </div>
               </div>
@@ -241,7 +247,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-blue-600">
-                        ${Number(entry.amount).toLocaleString()}
+                        {formatCurrency(Number(entry.amount), currentCurrencyCode)}
                       </span>
                       <div className="flex space-x-2">
                         <button
