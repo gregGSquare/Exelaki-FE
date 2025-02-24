@@ -1,73 +1,51 @@
 import React from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { ExpenseDistribution } from '../types/entryTypes';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
+import { formatCurrency } from '../utils/currency';
+import { useBudget } from '../contexts/BudgetContext';
 
 interface ExpensePieChartProps {
   expenseDistribution: ExpenseDistribution[];
 }
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF6B6B', '#6B66FF'];
+
 const ExpensePieChart: React.FC<ExpensePieChartProps> = ({ expenseDistribution }) => {
-  // Sort expenses by percentage in descending order
-  const sortedExpenses = [...expenseDistribution].sort((a, b) => b.percentage - a.percentage);
-
-  const data = {
-    labels: sortedExpenses.map(item => item.tag.toLowerCase()),
-    datasets: [
-      {
-        data: sortedExpenses.map(item => item.percentage),
-        backgroundColor: [
-          '#8AB4F8',  // Light blue
-          '#C58AF9',  // Purple
-          '#34A853',  // Green
-          '#FBBC04',  // Yellow
-          '#EA4335',  // Red
-          '#4285F4',  // Blue
-          '#46BDC6',  // Teal
-          '#F94892',  // Pink
-          '#FF9F40',  // Orange
-          '#B4B4B4'   // Gray
-        ],
-        borderWidth: 0,
-        cutout: '60%'
-      },
-    ],
-  };
-
-  const options = {
-    plugins: {
-      legend: {
-        position: 'right' as const,
-        align: 'center' as const,
-        labels: {
-          usePointStyle: true,
-          padding: 15,
-          font: {
-            size: 12
-          }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: (context: any) => {
-            const expense = sortedExpenses[context.dataIndex];
-            return `${expense.tag.toLowerCase()}: ${expense.percentage.toFixed(1)}% ($${expense.amount})`;
-          }
-        }
-      }
-    },
-    maintainAspectRatio: false,
-    layout: {
-      padding: 20
+  const { currentCurrencyCode } = useBudget();
+  
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-2 border border-gray-200 shadow-sm rounded text-xs">
+          <p className="font-medium">{data.name}</p>
+          <p>{formatCurrency(data.value, currentCurrencyCode)} ({data.percentage}%)</p>
+        </div>
+      );
     }
+    return null;
   };
 
   return (
-    <div className="h-full w-full">
-      <Doughnut data={data} options={options} />
-    </div>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={expenseDistribution}
+          cx="50%"
+          cy="50%"
+          labelLine={false}
+          outerRadius={80}
+          fill="#8884d8"
+          dataKey="value"
+          nameKey="name"
+        >
+          {expenseDistribution.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip content={<CustomTooltip />} />
+      </PieChart>
+    </ResponsiveContainer>
   );
 };
 

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022", // Target modern JavaScript (ES2022)
     "module": "ESNext", // Use the latest module system
-    "lib": ["ES2022", "DOM", "DOM.Iterable"], // Include DOM and ES2022 types
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "esnext"], // Include DOM and ES2022 types
     "strict": true, // Enable all strict type-checking options
     "noImplicitAny": true, // Disallow `any` types unless explicitly specified
     "skipLibCheck": true, // Skip checking `.d.ts` files for faster compilation

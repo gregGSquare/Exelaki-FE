@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBudget } from '../contexts/BudgetContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,17 +53,53 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [isLoading, setIsLoading] = useState(false);
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [currencyCode, setCurrencyCode] = useState<string>("USD");
 
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
+  const currencies = useMemo(() => {
+    // Try to get all currencies using the browser API
+    let currencyCodes: string[] = [];
+    
+    try {
+      // TypeScript doesn't know about this method, but the browser might support it
+      // @ts-ignore - Ignore TypeScript error for this line
+      currencyCodes = Intl.supportedValuesOf('currency');
+    } catch (e) {
+      // Fallback to common currencies if the browser doesn't support the API
+      currencyCodes = [
+        'USD', 'EUR', 'GBP', 'SEK', 'JPY', 'CAD', 'AUD', 'CHF', 
+        'CNY', 'INR', 'BRL', 'MXN', 'NOK', 'DKK', 'PLN', 'ZAR'
+      ];
+    }
+    
+    // Map currency codes to objects with name and code
+    return currencyCodes.map(code => {
+      let name;
+      try {
+        name = new Intl.DisplayNames(['en'], { type: 'currency' }).of(code);
+      } catch (e) {
+        // Fallback for browsers that don't support DisplayNames
+        name = code;
+      }
+      return { code, name: name || code };
+    });
+  }, []);
+
   const handleCreateNewBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await api.post("/budget", { name: budgetName, month, year });
+      console.log("Creating budget with currency:", currencyCode);
+      const response = await api.post("/budget", { 
+        name: budgetName, 
+        month, 
+        year,
+        currency: currencyCode
+      });
       const newBudget = response.data;
       setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
       setCurrentBudgetId(newBudget._id);
@@ -186,6 +222,24 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
+                </div>
+                <div>
+                  <label htmlFor="currencyCode" className="block text-sm font-medium text-gray-700 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    id="currencyCode"
+                    value={currencyCode}
+                    onChange={(e) => setCurrencyCode(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    {currencies.map(({ code, name }) => (
+                      <option key={code} value={code}>
+                        {code} - {name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
