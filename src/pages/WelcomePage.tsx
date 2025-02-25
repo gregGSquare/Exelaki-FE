@@ -55,6 +55,8 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
   const [currencyCode, setCurrencyCode] = useState<string>("USD");
+  const [budgetType, setBudgetType] = useState<string>("MONTHLY");
+  const [description, setDescription] = useState<string>("");
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -72,7 +74,9 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
         name: budgetName, 
         month, 
         year,
-        currency: currencyCode
+        currency: currencyCode,
+        budgetType,
+        description
       });
       const newBudget = response.data;
       setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
@@ -170,9 +174,6 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
                 <span className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full">
                   {months[budget.month - 1]} {budget.year}
                 </span>
-                <p className="text-sm text-gray-500 mt-2">
-                  Created on {new Date(budget.createdAt).toLocaleDateString()}
-                </p>
               </div>
             </div>
           ))}
@@ -248,6 +249,37 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
                       required
                     />
                   </div>
+                </div>
+                <div>
+                  <label htmlFor="budgetType" className="block text-sm font-medium text-gray-700">
+                    Budget Type *
+                  </label>
+                  <select
+                    id="budgetType"
+                    value={budgetType}
+                    onChange={(e) => setBudgetType(e.target.value)}
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    required
+                  >
+                    <option value="MONTHLY">Monthly Budget</option>
+                    <option value="TRAVEL">Travel Budget</option>
+                    <option value="PROJECT">Project Budget</option>
+                    <option value="EVENT">Event Budget</option>
+                    <option value="CUSTOM">Custom Budget</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Add a description for your budget"
+                  />
                 </div>
                 <div className="flex justify-end space-x-4">
                   <button

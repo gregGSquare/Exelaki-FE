@@ -3,6 +3,9 @@ export interface Budget {
   name: string;
   month: number;
   year: number;
+  currency: string;
+  budgetType: string;
+  description?: string;
   createdAt: string;
   currencyCode: string;
 } 
