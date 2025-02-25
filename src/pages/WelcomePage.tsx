@@ -4,6 +4,7 @@ import { useBudget } from '../contexts/BudgetContext';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/axios';
 import { Budget } from '../types/budget';
+import { getCurrencyList } from '../utils/currency';
 
 interface WelcomePageProps {
   budgets: Budget[];
@@ -60,34 +61,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const currencies = useMemo(() => {
-    // Try to get all currencies using the browser API
-    let currencyCodes: string[] = [];
-    
-    try {
-      // TypeScript doesn't know about this method, but the browser might support it
-      // @ts-ignore - Ignore TypeScript error for this line
-      currencyCodes = Intl.supportedValuesOf('currency');
-    } catch (e) {
-      // Fallback to common currencies if the browser doesn't support the API
-      currencyCodes = [
-        'USD', 'EUR', 'GBP', 'SEK', 'JPY', 'CAD', 'AUD', 'CHF', 
-        'CNY', 'INR', 'BRL', 'MXN', 'NOK', 'DKK', 'PLN', 'ZAR'
-      ];
-    }
-    
-    // Map currency codes to objects with name and code
-    return currencyCodes.map(code => {
-      let name;
-      try {
-        name = new Intl.DisplayNames(['en'], { type: 'currency' }).of(code);
-      } catch (e) {
-        // Fallback for browsers that don't support DisplayNames
-        name = code;
-      }
-      return { code, name: name || code };
-    });
-  }, []);
+  const currencies = useMemo(() => getCurrencyList(), []);
 
   const handleCreateNewBudget = async (e: React.FormEvent) => {
     e.preventDefault();
