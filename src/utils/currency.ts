@@ -1,5 +1,54 @@
 import currency from 'currency.js';
 
+// Add this interface at the top of the file
+export interface CurrencyOption {
+  code: string;
+  name: string;
+}
+
+/**
+ * Get a list of available currencies with their codes and names
+ * @returns Array of currency objects with code and name
+ */
+export const getCurrencyList = (): CurrencyOption[] => {
+  try {
+    // Try to use the browser's Intl API to get all supported currencies
+    // @ts-ignore - Ignore TypeScript error for this line
+    const currencyCodes: string[] = Intl.supportedValuesOf('currency');
+    
+    // Map currency codes to objects with name and code
+    return currencyCodes.map((code: string) => {
+      let name;
+      try {
+        name = new Intl.DisplayNames(['en'], { type: 'currency' }).of(code);
+      } catch (e) {
+        // Fallback for browsers that don't support DisplayNames
+        name = code;
+      }
+      return { code, name: name || code };
+    });
+  } catch (e) {
+    // Fallback to hardcoded list if browser doesn't support the API
+    return [
+      { code: 'USD', name: 'US Dollar' },
+      { code: 'EUR', name: 'Euro' },
+      { code: 'GBP', name: 'British Pound' },
+      { code: 'SEK', name: 'Swedish Krona' },
+      { code: 'JPY', name: 'Japanese Yen' },
+      { code: 'CAD', name: 'Canadian Dollar' },
+      { code: 'AUD', name: 'Australian Dollar' },
+      { code: 'CHF', name: 'Swiss Franc' },
+      { code: 'CNY', name: 'Chinese Yuan' },
+      { code: 'INR', name: 'Indian Rupee' },
+      { code: 'BRL', name: 'Brazilian Real' },
+      { code: 'MXN', name: 'Mexican Peso' },
+      { code: 'NOK', name: 'Norwegian Krone' },
+      { code: 'DKK', name: 'Danish Krone' },
+      { code: 'PLN', name: 'Polish Złoty' }
+    ];
+  }
+};
+
 /**
  * Format a number as currency with the specified currency code
  * @param amount The amount to format

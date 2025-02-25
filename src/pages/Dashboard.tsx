@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AddEntry from "../components/AddEntry";
 import { useFetchData } from "../hooks/useFetchData";
@@ -13,7 +13,7 @@ import ExpensePieChart from "../components/ExpensePieChart";
 import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
 import TotalScoreDisplay from "../components/TotalScoreDisplay";
 import { loadFinancialIndicators } from "../services/financialIndicatorsService";
-import { formatCurrency } from "../utils/currency";
+import { formatCurrency, getCurrencyList, CurrencyOption } from "../utils/currency";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +44,21 @@ const Dashboard: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
+  const [isEditingCurrency, setIsEditingCurrency] = useState(false);
+
+  const currencies = useMemo<CurrencyOption[]>(() => getCurrencyList(), []);
+
+  const handleCurrencyChange = async (newCurrencyCode: string) => {
+    try {
+      await api.put(`/budget/${budgetId}`, { currency: newCurrencyCode });
+      setCurrentCurrencyCode(newCurrencyCode);
+      setIsEditingCurrency(false);
+      const indicators = await loadFinancialIndicators(budgetId);
+      setFinancialIndicators(indicators);
+    } catch (error) {
+      console.error("Error updating budget currency:", error);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -88,7 +103,42 @@ const Dashboard: React.FC = () => {
       {/* Financial overview row */}
       <div className="bg-white shadow-sm rounded-lg px-2 sm:px-4 py-3 mb-6 overflow-x-auto">
         <div className="flex flex-col gap-4">
-          <h1 className="text-xl font-bold">{budgetName}</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-xl font-bold">{budgetName}</h1>
+            <div className="flex items-center">
+              {isEditingCurrency ? (
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={currentCurrencyCode}
+                    onChange={(e) => handleCurrencyChange(e.target.value)}
+                    className="text-sm border border-gray-300 rounded px-2 py-1"
+                  >
+                    {currencies.map(({ code, name }) => (
+                      <option key={code} value={code}>
+                        {code} - {name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setIsEditingCurrency(false)}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditingCurrency(true)}
+                  className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <span className="mr-1">{currentCurrencyCode}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
           
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex items-center divide-x divide-gray-200 lg:w-1/3">
