@@ -79,12 +79,61 @@ const Dashboard: React.FC = () => {
   }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated, setCurrentCurrencyCode]);
 
   const fetchBudgetDetails = async (budgetId: string) => {
+    console.log("Fetching budget details for ID:", budgetId);
     try {
-      const response = await api.get(`/budget/${budgetId}`);
+      // Log the token being used
+      const token = localStorage.getItem('accessToken');
+      console.log("Using token (first 20 chars):", token ? token.substring(0, 20) + '...' : 'No token');
+      
+      // Log the full URL being called
+      const fullUrl = `/budget/${budgetId}`;
+      console.log("Making API request to:", fullUrl);
+      
+      // Make the request with explicit headers for debugging
+      const response = await api.get(fullUrl, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log("Budget details response:", response.data);
       setBudgetName(response.data.name);
       setCurrentCurrencyCode(response.data.currency || "USD");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching budget details:", error);
+      
+      // More detailed error logging
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        console.error("Response headers:", error.response.headers);
+        
+        // Check if it's a 404 error
+        if (error.response.status === 404) {
+          console.error("Budget not found. Please check if the budget ID is correct.");
+          
+          // Try to fetch the budget list to see if the budget exists
+          try {
+            const budgetsResponse = await api.get('/budget');
+            console.log("Available budgets:", budgetsResponse.data);
+            
+            // Check if our budget ID is in the list
+            const budgetExists = budgetsResponse.data.some((budget: any) => budget._id === budgetId);
+            console.log("Budget exists in list:", budgetExists);
+            
+            if (budgetExists) {
+              console.log("Budget exists but can't be fetched individually. Possible API issue.");
+            }
+          } catch (listError) {
+            console.error("Error fetching budget list:", listError);
+          }
+        }
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+      } else {
+        console.error("Error setting up request:", error.message);
+      }
     }
   };
 
