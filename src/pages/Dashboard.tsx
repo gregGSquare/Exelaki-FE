@@ -381,13 +381,18 @@ const Dashboard: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h3 className="text-sm font-medium text-gray-900 mb-2">Expense Distribution</h3>
               <div className="h-64">
-                {financialIndicators.expenseDistribution.length > 0 ? (
-                  <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />
-                ) : (
-                  <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-500">No expense data available</p>
-                  </div>
-                )}
+                {(() => {
+                  console.log("Expense distribution data:", financialIndicators.expenseDistribution);
+                  if (financialIndicators.expenseDistribution && financialIndicators.expenseDistribution.length > 0) {
+                    return <ExpensePieChart expenseDistribution={financialIndicators.expenseDistribution} />;
+                  } else {
+                    return (
+                      <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-200 rounded-lg">
+                        <p className="text-sm text-gray-500">No expense data available</p>
+                      </div>
+                    );
+                  }
+                })()}
               </div>
             </div>
           </div>

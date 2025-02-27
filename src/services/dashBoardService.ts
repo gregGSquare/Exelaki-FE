@@ -28,9 +28,26 @@ export const editEntry = async (id: string, updatedEntry: any) => {
 export const fetchFinancialIndicators = async (budgetId: string) => {
   try {
     const response = await api.get(`/financial-indicators/${budgetId}`);
+    
+    // Ensure expenseDistribution is always an array
+    if (!response.data.expenseDistribution) {
+      response.data.expenseDistribution = [];
+    }
+    
+    // Log the response for debugging
+    console.log("Financial indicators response:", response.data);
+    
     return response.data;
   } catch (error) {
     console.error("Error fetching financial indicators:", error);
-    throw error;
+    // Return default structure on error
+    return {
+      totalScore: { value: "N/A", status: "GOOD" },
+      debtToIncomeRatio: { value: "N/A", status: "GOOD" },
+      savingsRate: { value: "N/A", status: "GOOD" },
+      carCostRatio: { value: "N/A", status: "GOOD" },
+      homeCostRatio: { value: "N/A", status: "GOOD" },
+      expenseDistribution: []
+    };
   }
 };
