@@ -38,30 +38,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [backendError, setBackendError] = useState<string | null>(null);
 
-  // Log Auth0 state for debugging
-  useEffect(() => {
-    console.log('Auth0 state:', { 
-      isAuthenticated: auth0IsAuthenticated, 
-      isLoading: auth0IsLoading,
-      user: auth0User,
-      error: auth0Error
-    });
-  }, [auth0IsAuthenticated, auth0IsLoading, auth0User, auth0Error]);
-
   // Fetch user profile from your backend when authenticated with Auth0
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (auth0IsAuthenticated && auth0User) {
         try {
-          console.log('Fetching access token...');
           const token = await getAccessTokenSilently();
-          console.log('Token received, length:', token.length);
           localStorage.setItem('accessToken', token);
           
           // Fetch user profile from your backend
-          console.log('Fetching user profile from backend...');
           const response = await api.get('/auth/profile');
-          console.log('User profile received:', response.data);
           setUser(response.data);
           setBackendError(null);
         } catch (error: any) {
@@ -91,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = () => {
     setBackendError(null);
-    console.log('Initiating Auth0 login...');
     loginWithRedirect({
       authorizationParams: {
         redirect_uri: process.env.NODE_ENV === 'development'
@@ -107,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    console.log('Logging out...');
     localStorage.removeItem('accessToken');
     setUser(null);
     setBackendError(null);
@@ -130,16 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return undefined;
     }
   };
-
-  // For debugging
-  useEffect(() => {
-    console.log('AuthContext state:', {
-      isAuthenticated: auth0IsAuthenticated && !!user,
-      user,
-      auth0User,
-      backendError
-    });
-  }, [auth0IsAuthenticated, user, auth0User, backendError]);
 
   return (
     <AuthContext.Provider

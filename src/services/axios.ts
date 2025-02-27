@@ -7,8 +7,6 @@ const baseURL = isDevelopment
   ? process.env.REACT_APP_API_URL_DEV || 'http://localhost:5000/api'
   : process.env.REACT_APP_API_URL_PROD || 'https://exelaki-be.onrender.com/api';
 
-console.log('API base URL:', baseURL);
-
 const api = axios.create({
   baseURL,
   headers: {
@@ -27,9 +25,6 @@ api.interceptors.request.use(async (config) => {
   const accessToken = localStorage.getItem('accessToken');
   if (accessToken) {
     config.headers['Authorization'] = `Bearer ${accessToken}`;
-    console.log('Adding Auth0 token to request');
-  } else {
-    console.log('No Auth0 token available for request');
   }
   return config;
 }, (error) => {
@@ -44,7 +39,6 @@ api.interceptors.response.use(
     console.error('API error:', error.response?.status, error.response?.data);
     
     if (error.response && error.response.status === 401) {
-      console.log('Unauthorized error - redirecting to login');
       // Clear the token and redirect to login
       localStorage.removeItem('accessToken');
       window.location.href = '/login';

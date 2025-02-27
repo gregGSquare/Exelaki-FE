@@ -34,12 +34,8 @@ export const fetchFinancialIndicators = async (budgetId: string) => {
       response.data.expenseDistribution = [];
     }
     
-    // Log the response for debugging
-    console.log("Financial indicators response:", response.data);
-    
     return response.data;
   } catch (error) {
-    console.error("Error fetching financial indicators:", error);
     // Return default structure on error
     return {
       totalScore: { value: "N/A", status: "GOOD" },
