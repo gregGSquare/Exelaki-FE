@@ -3,9 +3,12 @@ import { deleteEntry, editEntry } from "../services/dashBoardService";
 import { Entry } from "../types/entryTypes";
 import { CategoryType } from "../types/categoryTypes";
 import { loadFinancialIndicators } from "../services/financialIndicatorsService";
+import { handleApiError } from "../utils/errorHandler";
+import { useNotification } from "../contexts/NotificationContext";
 
 export const useEditDelete = (fetchData: () => void, budgetId: string, setFinancialIndicators: (indicators: any) => void) => {
   const [editEntryState, setEditEntryState] = useState<Entry | null>(null);
+  const { showNotification } = useNotification();
 
   const handleDelete = async (id: string, type: CategoryType) => {
     try {
@@ -13,8 +16,10 @@ export const useEditDelete = (fetchData: () => void, budgetId: string, setFinanc
       await fetchData(); // Refresh data after deletion
       const indicators = await loadFinancialIndicators(budgetId);
       setFinancialIndicators(indicators);
+      showNotification(`${type.toLowerCase()} deleted successfully`, 'success');
     } catch (error) {
-      console.error(`Error deleting ${type}:`, error);
+      const processedError = handleApiError(error);
+      showNotification(`Error deleting ${type.toLowerCase()}: ${processedError.message}`, 'error');
     }
   };
 
@@ -37,8 +42,10 @@ export const useEditDelete = (fetchData: () => void, budgetId: string, setFinanc
       await fetchData();
       const indicators = await loadFinancialIndicators(budgetId);
       setFinancialIndicators(indicators);
+      showNotification('Entry updated successfully', 'success');
     } catch (error) {
-      console.error("Error editing entry:", error);
+      const processedError = handleApiError(error);
+      showNotification(`Error updating entry: ${processedError.message}`, 'error');
     }
   };
 

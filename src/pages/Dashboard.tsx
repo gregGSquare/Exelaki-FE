@@ -7,6 +7,7 @@ import useFetchCategories from "../hooks/useFetchCategories";
 import CategoryTables from "../components/CategoryTables";
 import { useBudget } from "../contexts/BudgetContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotification } from "../contexts/NotificationContext";
 import api from "../services/axios";
 import {ExpenseDistribution } from "../types/entryTypes";
 import ExpensePieChart from "../components/ExpensePieChart";
@@ -14,6 +15,7 @@ import FinancialIndicatorCards from "../components/FinancialIndicatorCards";
 import TotalScoreDisplay from "../components/TotalScoreDisplay";
 import { loadFinancialIndicators } from "../services/financialIndicatorsService";
 import { formatCurrency, getCurrencyList, CurrencyOption } from "../utils/currency";
+import { handleApiError } from "../utils/errorHandler";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ const Dashboard: React.FC = () => {
   const { setCurrentBudgetId, setCurrentCurrencyCode, currentCurrencyCode } = useBudget();
   const [budgetName, setBudgetName] = useState("");
   const { isAuthenticated } = useAuth();
+  const { showNotification } = useNotification();
   const { incomes, expenses, savings, fetchData } = useFetchData(budgetId);
   const [financialIndicators, setFinancialIndicators] = useState({
     totalScore: { value: "N/A", status: "GOOD" },
@@ -55,14 +58,16 @@ const Dashboard: React.FC = () => {
       setIsEditingCurrency(false);
       const indicators = await loadFinancialIndicators(budgetId);
       setFinancialIndicators(indicators);
+      showNotification('Currency updated successfully', 'success');
     } catch (error) {
-      console.error("Error updating budget currency:", error);
+      const processedError = handleApiError(error);
+      showNotification(processedError.message, 'error');
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) {
-      console.error("User is not authenticated");
+      showNotification('Please log in to access this page', 'warning');
       navigate("/login");
       return;
     }
@@ -71,12 +76,17 @@ const Dashboard: React.FC = () => {
       setCurrentBudgetId(budgetId);
       fetchBudgetDetails(budgetId);
       const loadIndicators = async () => {
-        const indicators = await loadFinancialIndicators(budgetId);
-        setFinancialIndicators(indicators);
+        try {
+          const indicators = await loadFinancialIndicators(budgetId);
+          setFinancialIndicators(indicators);
+        } catch (error) {
+          const processedError = handleApiError(error);
+          showNotification('Failed to load financial indicators', 'error');
+        }
       };
       loadIndicators();
     }
-  }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated, setCurrentCurrencyCode]);
+  }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated, setCurrentCurrencyCode, showNotification]);
 
   const fetchBudgetDetails = async (budgetId: string) => {
     try {
@@ -94,16 +104,14 @@ const Dashboard: React.FC = () => {
       setBudgetName(response.data.name);
       setCurrentCurrencyCode(response.data.currency || "USD");
     } catch (error: any) {
-      // Handle error silently
-      if (error.response && error.response.status === 404) {
-        // Try to fetch the budget list to see if the budget exists
-        try {
-          const budgetsResponse = await api.get('/budget');
-          // Check if our budget ID is in the list
-          const budgetExists = budgetsResponse.data.some((budget: any) => budget._id === budgetId);
-        } catch (listError) {
-          // Silently handle error
-        }
+      const processedError = handleApiError(error);
+      
+      // Handle 404 errors specifically
+      if (processedError.statusCode === 404) {
+        showNotification('Budget not found. Redirecting to budgets page.', 'warning');
+        navigate('/budgets');
+      } else {
+        showNotification(processedError.message, 'error');
       }
     }
   };

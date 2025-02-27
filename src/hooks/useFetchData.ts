@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { fetchEntries } from "../services/dashBoardService";
 import { Entry } from "../types/entryTypes";
+import { handleApiError } from "../utils/errorHandler";
+import { useNotification } from "../contexts/NotificationContext";
 
 export const useFetchData = (budgetId: string) => {
   const [entries, setEntries] = useState<Entry[]>([]);
+  const { showNotification } = useNotification();
 
   const fetchData = async () => {
     try {
@@ -15,7 +18,8 @@ export const useFetchData = (budgetId: string) => {
       }));
       setEntries(mappedEntries);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      const processedError = handleApiError(error);
+      showNotification(`Failed to fetch entries: ${processedError.message}`, 'error');
     }
   };
 

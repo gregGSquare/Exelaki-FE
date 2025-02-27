@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNotification } from '../contexts/NotificationContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading, backendError } = useAuth();
   const { error: auth0Error } = useAuth0();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -17,23 +19,20 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (auth0Error) {
-      console.error('Auth0 error:', auth0Error);
-      setLoginError(auth0Error.message);
-    } else if (backendError) {
-      console.error('Backend error:', backendError);
-      setLoginError(`Backend error: ${backendError}`);
-    } else {
-      setLoginError(null);
+      showNotification(`Authentication error: ${auth0Error.message}`, 'error');
     }
-  }, [auth0Error, backendError]);
+    if (backendError) {
+      showNotification(`Backend error: ${backendError}`, 'error');
+    }
+  }, [auth0Error, backendError, showNotification]);
 
-  const handleLogin = () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setLoginError(null);
       login();
-    } catch (error) {
-      console.error('Login error:', error);
-      setLoginError('Failed to initiate login. Please try again.');
+    } catch (error: any) {
+      showNotification(error.message || 'Login failed', 'error');
     }
   };
 

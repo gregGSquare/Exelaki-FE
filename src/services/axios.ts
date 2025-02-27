@@ -1,4 +1,5 @@
 import axios from "axios";
+import { handleApiError } from "../utils/errorHandler";
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -28,7 +29,8 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 }, (error) => {
-  console.error('Request interceptor error:', error);
+  // Process request errors through our error handler
+  handleApiError(error);
   return Promise.reject(error);
 });
 
@@ -36,14 +38,20 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.error('API error:', error.response?.status, error.response?.data);
+    // Process API errors through our error handler
+    const processedError = handleApiError(error);
     
-    if (error.response && error.response.status === 401) {
+    // Handle authentication errors
+    if (processedError.type === 'AUTHENTICATION' && !window._logoutTriggered) {
+      // Set flag to prevent multiple redirects
+      window._logoutTriggered = true;
+      
       // Clear the token and redirect to login
       localStorage.removeItem('accessToken');
       window.location.href = '/login';
     }
-    return Promise.reject(error);
+    
+    return Promise.reject(processedError);
   }
 );
 

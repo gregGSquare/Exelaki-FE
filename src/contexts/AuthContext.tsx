@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '../services/axios';
+import { handleApiError, ErrorType } from '../utils/errorHandler';
 
 interface User {
   _id: string;
@@ -51,8 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(response.data);
           setBackendError(null);
         } catch (error: any) {
-          console.error('Error fetching user profile:', error);
-          setBackendError(error.message || 'Failed to fetch user profile');
+          const processedError = handleApiError(error);
+          setBackendError(processedError.message);
           
           // If we can't get the profile but we're authenticated with Auth0,
           // we should still consider the user authenticated
@@ -110,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       return await getAccessTokenSilently();
     } catch (error) {
-      console.error('Error getting access token:', error);
+      const processedError = handleApiError(error);
       return undefined;
     }
   };
