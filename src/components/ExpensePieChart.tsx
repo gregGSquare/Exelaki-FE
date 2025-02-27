@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { ExpenseDistribution } from '../types/entryTypes';
 import { formatCurrency } from '../utils/currency';
@@ -24,10 +24,6 @@ const COLORS = [
 
 const ExpensePieChart: React.FC<ExpensePieChartProps> = ({ expenseDistribution }) => {
   const { currentCurrencyCode } = useBudget();
-  
-  useEffect(() => {
-    console.log("ExpensePieChart rendered with data:", expenseDistribution);
-  }, [expenseDistribution]);
   
   // Ensure we have valid data and transform it for recharts
   const chartData = React.useMemo(() => {
@@ -94,16 +90,12 @@ const ExpensePieChart: React.FC<ExpensePieChartProps> = ({ expenseDistribution }
 
   // Return empty container if no data
   if (!chartData || chartData.length === 0) {
-    console.log("No valid chart data available");
     return (
       <div className="h-full flex items-center justify-center">
         <p className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full">No expense data available</p>
       </div>
     );
   }
-
-  // Log the chart data to debug
-  console.log("Chart data for rendering:", chartData);
 
   try {
     return (
@@ -144,7 +136,6 @@ const ExpensePieChart: React.FC<ExpensePieChartProps> = ({ expenseDistribution }
       </ResponsiveContainer>
     );
   } catch (error) {
-    console.error("Error rendering pie chart:", error);
     return (
       <div className="h-full flex items-center justify-center">
         <p className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full">Error displaying chart</p>

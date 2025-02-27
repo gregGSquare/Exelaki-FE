@@ -18,10 +18,6 @@ export const Auth0ProviderWithConfig: React.FC<Auth0ProviderWithConfigProps> = (
     ? (process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV)
     : (process.env.REACT_APP_AUTH0_REDIRECT_URI);
 
-  console.log('Auth0 redirect URI:', redirectUri);
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('Auth0 audience:', audience);
-
   return (
     <Auth0Provider
       domain={domain}

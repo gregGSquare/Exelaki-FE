@@ -69,7 +69,6 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      console.log("Creating budget with currency:", currencyCode);
       const response = await api.post("/budget", { 
         name: budgetName, 
         month, 

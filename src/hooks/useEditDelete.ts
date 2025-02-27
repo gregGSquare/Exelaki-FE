@@ -19,7 +19,6 @@ export const useEditDelete = (fetchData: () => void, budgetId: string, setFinanc
   };
 
   const handleEdit = (entry: Entry, entryType: CategoryType) => {
-    console.log('entry + entryType', entry, entryType);
     setEditEntryState({ ...entry, category: { type: entryType, _id: entry.category._id, name: entry.category.name, user: entry.category.user } });
   };
 
