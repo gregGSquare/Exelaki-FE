@@ -15,7 +15,6 @@ export const registerUser = async (email: string, password: string) => {
       throw new Error("No token found in the response");
     }
   } catch (error: any) {
-    console.error("Error registering user:", error);
     throw new Error(error.response?.data.message || "Registration failed");
   }
 };
@@ -31,7 +30,6 @@ export const loginUser = async (email: string, password: string) => {
       throw new Error("No token found in the response");
     }
   } catch (error: any) {
-    console.error("Error logging in:", error);
     throw new Error(error.response?.data.message || "Login failed");
   }
 };
@@ -47,7 +45,6 @@ export const refreshAccessToken = async () => {
       throw new Error("No token found in the refresh response");
     }
   } catch (error: any) {
-    console.error("Error refreshing access token:", error);
     throw new Error("Unable to refresh token");
   }
 };

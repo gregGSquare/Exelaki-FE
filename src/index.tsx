@@ -5,10 +5,11 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { AuthProvider } from "./contexts/AuthContext";
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById('root');
+
 if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
+  const reactRoot = ReactDOM.createRoot(rootElement);
+  reactRoot.render(
     <React.StrictMode>
       <AuthProvider>
         <App />
@@ -16,7 +17,7 @@ if (rootElement) {
     </React.StrictMode>,
   );
 } else {
-  console.error("Failed to find the root element.");
+  document.body.innerHTML = '<div style="text-align: center; padding: 20px;">Failed to initialize the application. Please refresh the page or contact support.</div>';
 }
 
 reportWebVitals();

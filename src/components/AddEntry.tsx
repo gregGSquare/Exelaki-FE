@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";  
 import api from "../services/axios";
 import { Category, CategoryType } from "../types/categoryTypes";
-import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags } from "../types/entryTypes";
+import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags, EntryType } from "../types/entryTypes";
 
 interface AddEntryProps {
   onAdd: () => void;
@@ -28,6 +28,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const [flexibility, setFlexibility] = useState<EntryFlexibility>("FIXED");
   const [recurrence, setRecurrence] = useState<EntryRecurrence>("MONTHLY");
   const [tags, setTags] = useState<EntryTags[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {  // Only set when modal opens
@@ -75,8 +76,21 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedType || !name || !amount) {
-      console.error("Missing required fields");
+    // Validate required fields
+    if (!name || !amount) {
+      setError("Name and amount are required");
+      return;
+    }
+    
+    // Validate that a type is selected
+    if (!selectedType) {
+      setError("Please select a type (Income, Expense, or Saving)");
+      return;
+    }
+    
+    // For expenses, validate category
+    if (selectedType === "EXPENSE" && !selectedCategoryId && !customCategoryMode) {
+      setError("Category is required for expenses");
       return;
     }
 
@@ -93,7 +107,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
       
       // For EXPENSE, require category selection
       if (selectedType === 'EXPENSE' && !categoryId && !customCategoryMode) {
-        console.error("Category is required for expenses");
+        setError("Category is required for expenses");
         return;
       }
 
@@ -110,7 +124,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
         amount: parseFloat(amount),
         categoryId: categoryId,
         budgetId: budgetId,
-        type: selectedType,
+        type: selectedType as EntryType,
         flexibility: selectedType === 'EXPENSE' ? flexibility : "FIXED",
         recurrence: selectedType === 'EXPENSE' ? recurrence : "MONTHLY",
         tags: selectedType === 'EXPENSE' ? tags : [EntryTags.MISC],
@@ -125,8 +139,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
         onClose();
       }
     } catch (error: any) {
-      console.error("Error creating entry:", error);
-      console.error("Error response:", error.response?.data);
+      setError(error.response?.data?.message || "Failed to create entry");
     }
   };
 

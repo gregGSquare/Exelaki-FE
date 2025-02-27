@@ -22,7 +22,7 @@ const AppRoutes: React.FC = () => {
           const response = await api.get('/budget');
           setBudgets(response.data);
         } catch (error) {
-          console.error('Error fetching budgets:', error);
+          // Handle the error appropriately
         }
       };
       fetchBudgets();

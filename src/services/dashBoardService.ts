@@ -1,28 +1,49 @@
 import api from "./axios";
+import { handleApiError } from "../utils/errorHandler";
 
 export const fetchCategories = async () => {
-  const response = await api.get("/categories");
-  return response.data;
+  try {
+    const response = await api.get("/categories");
+    return response.data;
+  } catch (error) {
+    const processedError = handleApiError(error);
+    throw processedError;
+  }
 };
 
 export const fetchEntries = async (budgetId: string) => {
-  const response = await api.get(`/entries?budgetId=${budgetId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/entries?budgetId=${budgetId}`);
+    return response.data;
+  } catch (error) {
+    const processedError = handleApiError(error);
+    throw processedError;
+  }
 };
 
 export const deleteEntry = async (id: string) => {
-  const response = await api.delete(`/entries/${id}`);
-  if (!response.status.toString().startsWith("2")) {
-    throw new Error(`Failed to delete entry`);
+  try {
+    const response = await api.delete(`/entries/${id}`);
+    if (!response.status.toString().startsWith("2")) {
+      throw new Error(`Failed to delete entry`);
+    }
+  } catch (error) {
+    const processedError = handleApiError(error);
+    throw processedError;
   }
 };
 
 export const editEntry = async (id: string, updatedEntry: any) => {
-  const response = await api.put(`/entries/${id}`, updatedEntry);
-  if (!response.status.toString().startsWith("2")) {
-    throw new Error(`Failed to edit entry`);
+  try {
+    const response = await api.put(`/entries/${id}`, updatedEntry);
+    if (!response.status.toString().startsWith("2")) {
+      throw new Error(`Failed to edit entry`);
+    }
+    return response.data;
+  } catch (error) {
+    const processedError = handleApiError(error);
+    throw processedError;
   }
-  return response.data;
 };
 
 export const fetchFinancialIndicators = async (budgetId: string) => {
@@ -36,6 +57,9 @@ export const fetchFinancialIndicators = async (budgetId: string) => {
     
     return response.data;
   } catch (error) {
+    // Process the error but still return default values
+    handleApiError(error);
+    
     // Return default structure on error
     return {
       totalScore: { value: "N/A", status: "GOOD" },

@@ -52,7 +52,6 @@ export const refreshAccessToken = async (): Promise<string | null> => {
       throw new Error('Failed to refresh access token');
     }
   } catch (error) {
-    console.error('Error refreshing access token:', error);
-    return null;
+    throw error;
   }
 };
