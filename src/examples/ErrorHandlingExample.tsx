@@ -2,6 +2,70 @@ import React, { useState } from 'react';
 import { useErrorHandler, ErrorType, createError } from '../core/errors';
 import { apiClient } from '../core/api';
 
+// Styles as a JavaScript object for inline styling
+const styles = {
+  container: {
+    maxWidth: '500px',
+    margin: '0 auto',
+    padding: '20px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+  },
+  errorBanner: {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
+    padding: '10px',
+    marginBottom: '20px',
+    borderRadius: '4px',
+  },
+  formGroup: {
+    marginBottom: '15px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '5px',
+    fontWeight: 500,
+  },
+  input: {
+    width: '100%',
+    padding: '8px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+  },
+  inputError: {
+    width: '100%',
+    padding: '8px',
+    border: '1px solid #dc3545',
+    borderRadius: '4px',
+  },
+  errorMessage: {
+    color: '#dc3545',
+    fontSize: '0.875rem',
+    marginTop: '5px',
+  },
+  formActions: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '20px',
+  },
+  button: {
+    padding: '8px 16px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+  },
+  buttonDisabled: {
+    padding: '8px 16px',
+    backgroundColor: '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'not-allowed',
+  },
+};
+
 /**
  * Example component demonstrating the error handling system
  */
@@ -86,51 +150,56 @@ const ErrorHandlingExample: React.FC = () => {
   };
 
   return (
-    <div className="error-handling-example">
+    <div style={styles.container}>
       <h2>Error Handling Example</h2>
       
       {/* Display general error message */}
       {errorMessage && (
-        <div className="error-banner">{errorMessage}</div>
+        <div style={styles.errorBanner}>{errorMessage}</div>
       )}
       
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="email">Email</label>
           <input
             type="text"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className={hasError('email') ? 'input-error' : ''}
+            style={hasError('email') ? styles.inputError : styles.input}
           />
           {hasError('email') && (
-            <div className="error-message">{getErrorMessage('email')}</div>
+            <div style={styles.errorMessage}>{getErrorMessage('email')}</div>
           )}
         </div>
         
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className={hasError('password') ? 'input-error' : ''}
+            style={hasError('password') ? styles.inputError : styles.input}
           />
           {hasError('password') && (
-            <div className="error-message">{getErrorMessage('password')}</div>
+            <div style={styles.errorMessage}>{getErrorMessage('password')}</div>
           )}
         </div>
         
-        <div className="form-actions">
-          <button type="submit" disabled={loading}>
+        <div style={styles.formActions}>
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={loading ? styles.buttonDisabled : styles.button}
+          >
             {loading ? 'Loading...' : 'Submit'}
           </button>
           <button 
             type="button" 
+            style={styles.button}
             onClick={() => {
               // Example of creating a network error
               handleError(createError(
@@ -143,70 +212,6 @@ const ErrorHandlingExample: React.FC = () => {
           </button>
         </div>
       </form>
-      
-      <style jsx>{`
-        .error-handling-example {
-          max-width: 500px;
-          margin: 0 auto;
-          padding: 20px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-        }
-        
-        .error-banner {
-          background-color: #f8d7da;
-          color: #721c24;
-          padding: 10px;
-          margin-bottom: 20px;
-          border-radius: 4px;
-        }
-        
-        .form-group {
-          margin-bottom: 15px;
-        }
-        
-        label {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: 500;
-        }
-        
-        input {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-        }
-        
-        .input-error {
-          border-color: #dc3545;
-        }
-        
-        .error-message {
-          color: #dc3545;
-          font-size: 0.875rem;
-          margin-top: 5px;
-        }
-        
-        .form-actions {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-        }
-        
-        button {
-          padding: 8px 16px;
-          background-color: #007bff;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        
-        button:disabled {
-          background-color: #6c757d;
-        }
-      `}</style>
     </div>
   );
 };

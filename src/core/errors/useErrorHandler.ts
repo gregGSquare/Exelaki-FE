@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { handleApiError } from './errorHandler';
+import { ErrorResponse, ErrorType } from './types';
+import { handleApiError, isErrorType } from './errorHandler';
 import { 
   extractFieldErrors, 
   FormFieldErrors, 
@@ -7,15 +8,7 @@ import {
   getToastErrorMessage,
   getErrorToastTitle
 } from './errorDisplay';
-
-// Import toast notification library if available
-// For this example, we'll assume a generic showToast function
-// Replace with your actual toast implementation
-const showToast = (title: string, message: string, type: 'error' | 'warning' | 'info' | 'success') => {
-  console.error(`${title}: ${message}`);
-  // In a real implementation, you would call your toast library here
-  // Example: toast.error(message, { title });
-};
+import { toast } from '../ui/toast';
 
 /**
  * Hook for handling errors in React components
@@ -52,7 +45,7 @@ export const useErrorHandler = () => {
     if (shouldShowErrorToast(processedError)) {
       const title = getErrorToastTitle(processedError);
       const message = getToastErrorMessage(processedError);
-      showToast(title, message, 'error');
+      toast.error(message, { title });
     }
     
     // Return the processed error for additional handling if needed

@@ -9,11 +9,13 @@ The API architecture is designed to provide a consistent and type-safe way to in
 - A centralized API client configuration
 - Request and response interceptors for authentication and error handling
 - A service factory for creating feature-specific API services
+- Automatic retry mechanism for handling network errors and server failures
 
 ## Files
 
 - `client.ts`: Configures and exports the main Axios instance with interceptors
 - `serviceFactory.ts`: Provides a factory function to create feature-specific API services
+- `retry.ts`: Implements the retry mechanism for handling transient errors
 - `index.ts`: Exports all API-related utilities
 
 ## Usage
@@ -45,6 +47,36 @@ export const userService = {
   }
 };
 ```
+
+### Using the Retry Mechanism Directly
+
+```typescript
+import { executeWithRetry } from '@/core/api';
+
+// Execute a function with retry logic
+const result = await executeWithRetry(
+  async () => {
+    // Your async operation here
+    return await someAsyncFunction();
+  },
+  {
+    maxRetries: 5,
+    baseDelay: 500,
+    statusCodesToRetry: [500, 502, 503, 504],
+    useExponentialBackoff: true
+  }
+);
+```
+
+## Retry Configuration
+
+The API client automatically retries requests that fail due to network issues or server errors. The default configuration includes:
+
+- Maximum of 3 retry attempts
+- Exponential backoff with jitter to prevent thundering herd problems
+- Retries on status codes 408 (Request Timeout), 429 (Too Many Requests), and 5xx server errors
+
+You can customize the retry behavior by modifying the `API_CONFIG.retry` object in `client.ts`.
 
 ## Error Handling
 

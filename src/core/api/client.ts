@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken } from '../utils/auth0';
 import { handleApiError, ErrorType, isErrorType } from '../errors';
+import { DEFAULT_RETRY_CONFIG, RetryConfig, executeWithRetry } from './retry';
 
 /**
  * API configuration
@@ -20,16 +21,7 @@ export const API_CONFIG = {
   timeout: 30000,
   
   // Retry configuration
-  retry: {
-    // Maximum number of retries
-    maxRetries: 3,
-    
-    // Base delay between retries in milliseconds
-    baseDelay: 1000,
-    
-    // Status codes that should trigger a retry
-    statusCodesToRetry: [408, 429, 500, 502, 503, 504],
-  }
+  retry: DEFAULT_RETRY_CONFIG
 };
 
 /**
@@ -88,7 +80,42 @@ export const createApiClient = (): AxiosInstance => {
     }
   );
   
-  return client;
+  // Create a wrapped client with retry functionality
+  const wrappedClient = {
+    ...client,
+    
+    // Override request method to add retry functionality
+    request: <T = any>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.request<T>(config), API_CONFIG.retry);
+    },
+    
+    // Override get method
+    get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.get<T>(url, config), API_CONFIG.retry);
+    },
+    
+    // Override post method
+    post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.post<T>(url, data, config), API_CONFIG.retry);
+    },
+    
+    // Override put method
+    put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.put<T>(url, data, config), API_CONFIG.retry);
+    },
+    
+    // Override patch method
+    patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.patch<T>(url, data, config), API_CONFIG.retry);
+    },
+    
+    // Override delete method
+    delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+      return executeWithRetry(() => client.delete<T>(url, config), API_CONFIG.retry);
+    }
+  };
+  
+  return wrappedClient as AxiosInstance;
 };
 
 // Export a singleton instance
