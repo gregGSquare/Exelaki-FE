@@ -1,5 +1,6 @@
 import axios from "axios";
-import { handleApiError } from "../utils/errorHandler";
+import { handleApiError, ErrorType } from "../utils/errorHandler";
+import { getAccessToken, removeAccessToken } from "../core/utils/auth0";
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -8,6 +9,9 @@ const baseURL = isDevelopment
   ? process.env.REACT_APP_API_URL_DEV || 'http://localhost:5000/api'
   : process.env.REACT_APP_API_URL_PROD || 'https://exelaki-be.onrender.com/api';
 
+/**
+ * Configured Axios instance for API requests
+ */
 const api = axios.create({
   baseURL,
   headers: {
@@ -23,7 +27,7 @@ declare global {
 
 // Add a request interceptor to include the Auth0 token
 api.interceptors.request.use(async (config) => {
-  const accessToken = localStorage.getItem('accessToken');
+  const accessToken = getAccessToken();
   if (accessToken) {
     config.headers['Authorization'] = `Bearer ${accessToken}`;
   }
@@ -42,12 +46,12 @@ api.interceptors.response.use(
     const processedError = handleApiError(error);
     
     // Handle authentication errors
-    if (processedError.type === 'AUTHENTICATION' && !window._logoutTriggered) {
+    if (processedError.type === ErrorType.AUTHENTICATION && !window._logoutTriggered) {
       // Set flag to prevent multiple redirects
       window._logoutTriggered = true;
       
       // Clear the token and redirect to login
-      localStorage.removeItem('accessToken');
+      removeAccessToken();
       window.location.href = '/login';
     }
     

@@ -1,35 +1,28 @@
 import React, { ReactNode } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
+import { AUTH0_CONFIG } from '../core/config/auth0';
 
 interface Auth0ProviderWithConfigProps {
   children: ReactNode;
 }
 
+/**
+ * Auth0Provider with configuration
+ * This component wraps the Auth0Provider with our application's configuration
+ */
 export const Auth0ProviderWithConfig: React.FC<Auth0ProviderWithConfigProps> = ({ children }) => {
-  const domain = process.env.REACT_APP_AUTH0_DOMAIN || '';
-  const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID || '';
-  
-  // The audience should be the identifier of your API in Auth0
-  const audience = process.env.REACT_APP_AUTH0_AUDIENCE || 'https://api.exelaki.com';
-  
-  // Use development redirect URI in development mode, production URI otherwise
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const redirectUri = isDevelopment 
-    ? (process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV)
-    : (process.env.REACT_APP_AUTH0_REDIRECT_URI);
-
   return (
     <Auth0Provider
-      domain={domain}
-      clientId={clientId}
+      domain={AUTH0_CONFIG.domain}
+      clientId={AUTH0_CONFIG.clientId}
       authorizationParams={{
-        redirect_uri: redirectUri,
-        audience: audience,
-        scope: 'openid profile email',
-        response_type: 'code',
+        redirect_uri: AUTH0_CONFIG.redirectUri,
+        audience: AUTH0_CONFIG.audience,
+        scope: AUTH0_CONFIG.scope,
+        response_type: AUTH0_CONFIG.responseType,
       }}
-      useRefreshTokens={true}
-      cacheLocation="localstorage"
+      useRefreshTokens={AUTH0_CONFIG.useRefreshTokens}
+      cacheLocation={AUTH0_CONFIG.cacheLocation}
     >
       {children}
     </Auth0Provider>

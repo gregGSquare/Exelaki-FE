@@ -2,15 +2,23 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 
+/**
+ * Callback page for Auth0 authentication
+ * This page is displayed during the authentication process
+ * and redirects the user after authentication is complete
+ */
 const Callback: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth0();
 
+  // Redirect after authentication is complete
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
+        // Redirect to home page if authenticated
         navigate('/', { replace: true });
       } else {
+        // Redirect to login page if not authenticated
         navigate('/login', { replace: true });
       }
     }

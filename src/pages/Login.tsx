@@ -4,6 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNotification } from '../contexts/NotificationContext';
 
+/**
+ * Login page component
+ * Handles user authentication through Auth0
+ */
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading, backendError } = useAuth();
@@ -11,12 +15,14 @@ const Login: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const { showNotification } = useNotification();
 
+  // Redirect to home if already authenticated
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
+  // Show notifications for auth errors
   useEffect(() => {
     if (auth0Error) {
       showNotification(`Authentication error: ${auth0Error.message}`, 'error');
@@ -26,11 +32,14 @@ const Login: React.FC = () => {
     }
   }, [auth0Error, backendError, showNotification]);
 
+  /**
+   * Handle login button click
+   */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoginError(null);
-      login();
+      login('/'); // Redirect to home page after login
     } catch (error: any) {
       showNotification(error.message || 'Login failed', 'error');
     }
@@ -85,16 +94,18 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-4 text-center text-xs text-gray-500">
-          <p>Environment: {process.env.NODE_ENV}</p>
-          <p>Auth0 Domain: {process.env.REACT_APP_AUTH0_DOMAIN}</p>
-          <p>API URL: {process.env.NODE_ENV === 'development' 
-            ? process.env.REACT_APP_API_URL_DEV 
-            : process.env.REACT_APP_API_URL_PROD}</p>
-          <p>Redirect URI: {process.env.NODE_ENV === 'development' 
-            ? process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV 
-            : process.env.REACT_APP_AUTH0_REDIRECT_URI}</p>
-        </div>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 text-center text-xs text-gray-500">
+            <p>Environment: {process.env.NODE_ENV}</p>
+            <p>Auth0 Domain: {process.env.REACT_APP_AUTH0_DOMAIN}</p>
+            <p>API URL: {process.env.NODE_ENV === 'development' 
+              ? process.env.REACT_APP_API_URL_DEV 
+              : process.env.REACT_APP_API_URL_PROD}</p>
+            <p>Redirect URI: {process.env.NODE_ENV === 'development' 
+              ? process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV 
+              : process.env.REACT_APP_AUTH0_REDIRECT_URI}</p>
+          </div>
+        )}
       </div>
     </div>
   );
