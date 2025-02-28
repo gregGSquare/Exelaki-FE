@@ -16,7 +16,7 @@ interface AuthContextProps {
   isLoading: boolean;
   user: User | null;
   auth0User: any;
-  login: () => void;
+  login: (options?: { screen_hint?: 'signup' | 'login' }) => void;
   logout: () => void;
   getAccessToken: () => Promise<string | undefined>;
   backendError: string | null;
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUserProfile();
   }, [auth0IsAuthenticated, auth0User, auth0IsLoading, getAccessTokenSilently]);
 
-  const login = () => {
+  const login = (options?: { screen_hint?: 'signup' | 'login' }) => {
     setBackendError(null);
     loginWithRedirect({
       authorizationParams: {
@@ -85,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : process.env.REACT_APP_AUTH0_REDIRECT_URI || window.location.origin,
         scope: 'openid profile email',
         audience: process.env.REACT_APP_AUTH0_AUDIENCE || 'https://api.exelaki.com',
+        screen_hint: options?.screen_hint,
       },
       appState: {
         returnTo: '/'
@@ -93,14 +94,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    // Prevent multiple logout attempts
+    if (window._logoutTriggered) {
+      return;
+    }
+    
+    // Set flag to prevent multiple redirects
+    window._logoutTriggered = true;
+    
+    // Clear local state first
     localStorage.removeItem('accessToken');
     setUser(null);
     setBackendError(null);
-    auth0Logout({ 
-      logoutParams: {
-        returnTo: window.location.origin 
+    
+    try {
+      // Construct the Auth0 logout URL directly
+      const domain = process.env.REACT_APP_AUTH0_DOMAIN;
+      const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+      
+      if (domain && clientId) {
+        const returnTo = encodeURIComponent(window.location.origin);
+        
+        // Use the Auth0 logout endpoint directly
+        const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}&federated=true`;
+        
+        // Navigate to the logout URL
+        window.location.href = logoutUrl;
+      } else {
+        // Fallback to the standard Auth0 logout method
+        auth0Logout({ 
+          logoutParams: {
+            returnTo: window.location.origin
+          }
+        });
       }
-    });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback to the standard Auth0 logout method
+      auth0Logout({ 
+        logoutParams: {
+          returnTo: window.location.origin
+        }
+      });
+    }
   };
 
   const getAccessToken = async () => {
