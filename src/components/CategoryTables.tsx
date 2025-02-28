@@ -8,7 +8,7 @@ interface CategoryTablesProps {
   entryType: 'INCOME' | 'EXPENSE' | 'SAVING';
   handleEdit: (entry: Entry, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
   handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
-  onAddToCategory: (categoryId: string, categoryName: string) => void;
+  onAddToCategory: (categoryId: string, categoryName: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
 }
 
 const CategoryTables: React.FC<CategoryTablesProps> = ({
@@ -87,7 +87,7 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
                 {formatCurrency(category.total, currentCurrencyCode)}
               </span>
               <button
-                onClick={() => onAddToCategory(category.id, category.name)}
+                onClick={() => onAddToCategory(category.id, category.name, entryType)}
                 className={`p-1 rounded-full transition-colors ${colors.button}`}
                 title="Add to this category"
               >

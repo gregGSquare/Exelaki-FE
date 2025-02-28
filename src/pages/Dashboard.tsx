@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
   const { incomeCategories, expenseCategories, savingCategories } = useFetchCategories();
   const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
   const [isAddSavingModalOpen, setIsAddSavingModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string} | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<{id: string, name: string, type: 'INCOME' | 'EXPENSE' | 'SAVING'} | null>(null);
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isEditCurrencyModalOpen, setIsEditCurrencyModalOpen] = useState(false);
@@ -202,8 +202,8 @@ const Dashboard: React.FC = () => {
     return Object.values(grouped).sort((a, b) => b.total - a.total);
   }, [expenses]);
 
-  const handleAddToCategory = (categoryId: string, categoryName: string) => {
-    setSelectedCategory({ id: categoryId, name: categoryName });
+  const handleAddToCategory = (categoryId: string, categoryName: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => {
+    setSelectedCategory({ id: categoryId, name: categoryName, type });
     setIsAddToCategoryModalOpen(true);
   };
 
@@ -649,10 +649,7 @@ const Dashboard: React.FC = () => {
               entryType="EXPENSE"
               handleEdit={handleEdit}
               handleDelete={handleDelete}
-              onAddToCategory={(categoryId, categoryName) => {
-                setSelectedCategory({ id: categoryId, name: categoryName });
-                setIsAddToCategoryModalOpen(true);
-              }}
+              onAddToCategory={handleAddToCategory}
             />
           </div>
         </div>
@@ -686,8 +683,14 @@ const Dashboard: React.FC = () => {
           setFinancialIndicators(indicators);
         }}
         budgetId={budgetId}
-        preselectedType="EXPENSE"
-        categories={expenseCategories}
+        preselectedType={selectedCategory?.type || "EXPENSE"}
+        categories={
+          selectedCategory?.type === "INCOME" 
+            ? incomeCategories 
+            : selectedCategory?.type === "SAVING" 
+              ? savingCategories 
+              : expenseCategories
+        }
         preselectedCategoryId={selectedCategory?.id}
         disableTypeSelection={true}
         disableCategorySelection={true}
@@ -698,10 +701,18 @@ const Dashboard: React.FC = () => {
         onClose={() => setEditEntry(null)}
         onAdd={handleEditSubmit}
         budgetId={budgetId}
-        preselectedType="EXPENSE"
-        categories={expenseCategories}
+        preselectedType={editEntry?.category.type || "EXPENSE"}
+        categories={
+          editEntry?.category.type === "INCOME" 
+            ? incomeCategories 
+            : editEntry?.category.type === "SAVING" 
+              ? savingCategories 
+              : expenseCategories
+        }
+        preselectedCategoryId={editEntry?.category._id}
         disableTypeSelection={true}
-        disableCategorySelection={false}
+        disableCategorySelection={true}
+        editEntry={editEntry}
       />
       
       <AddEntry
