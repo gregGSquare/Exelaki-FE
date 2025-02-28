@@ -72,6 +72,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Make the API call and wait for it to complete
       const response = await api.post("/budget", { 
         name: budgetName, 
         month, 
@@ -80,20 +81,43 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
         budgetType,
         description
       });
-      const newBudget = response.data;
       
-      // Ensure budgets is an array before updating it
-      if (Array.isArray(budgets)) {
-        setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
+      // Check if we have a valid response with the expected structure
+      if (response && response.data) {
+        // The actual budget data is nested inside the 'data' property
+        const budgetData = response.data.data;
+        
+        if (budgetData && budgetData._id) {
+          // Ensure budgets is an array before updating it
+          if (Array.isArray(budgets)) {
+            setBudgets((prevBudgets) => [...prevBudgets, budgetData]);
+          } else {
+            // If budgets is not an array, initialize it with the new budget
+            setBudgets([budgetData]);
+          }
+          
+          // Validate budget ID before setting it
+          if (budgetData._id && typeof budgetData._id === 'string') {
+            // Set the current budget ID in the context
+            setCurrentBudgetId(budgetData._id);
+            
+            // Close the modal and show success notification
+            setShowCreateModal(false);
+            showNotification('Budget created successfully', 'success');
+            
+            // Only navigate after all the above operations are complete
+            navigate(`/dashboard/${budgetData._id}`);
+          } else {
+            showNotification('Failed to create budget: Invalid budget ID', 'error');
+          }
+        } else {
+          // Handle case where response exists but data is missing
+          showNotification('Failed to create budget: Invalid server response structure', 'error');
+        }
       } else {
-        // If budgets is not an array, initialize it with the new budget
-        setBudgets([newBudget]);
+        // Handle case where response exists but data is missing
+        showNotification('Failed to create budget: Invalid server response', 'error');
       }
-      
-      setCurrentBudgetId(newBudget._id);
-      setShowCreateModal(false);
-      showNotification('Budget created successfully', 'success');
-      navigate(`/dashboard/${newBudget._id}`);
     } catch (error: any) {
       // Get the error message from the response
       if (error.response?.data?.message) {
