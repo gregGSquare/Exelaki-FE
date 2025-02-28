@@ -15,14 +15,10 @@ const ToastNotification: React.FC<ToastProps> = ({
   onClose, 
   duration = 5000 
 }) => {
-  // Ensure message is a string
+  // Simple message handling - we expect a string at this point
   const displayMessage = typeof message === 'string' 
     ? message 
-    : message === null || message === undefined 
-      ? 'An error occurred' 
-      : typeof message === 'object' 
-        ? JSON.stringify(message) 
-        : String(message);
+    : 'An error occurred';
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -79,13 +75,13 @@ const ToastNotification: React.FC<ToastProps> = ({
   };
 
   return (
-    <div className={`fixed top-4 right-4 p-4 rounded-lg border shadow-md max-w-md z-50 ${getToastStyles()}`}>
-      <div className="flex items-start">
+    <div className={`w-full rounded-lg border shadow-lg ${getToastStyles()}`} style={{ minWidth: '300px' }}>
+      <div className="flex items-start p-4">
         <div className="flex-shrink-0">
           {getIcon()}
         </div>
         <div className="ml-3 flex-1">
-          <p className="text-sm font-medium">{displayMessage}</p>
+          <p className="text-sm font-medium break-words">{displayMessage}</p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button

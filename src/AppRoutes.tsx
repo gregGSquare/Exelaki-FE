@@ -14,18 +14,47 @@ import Callback from './pages/Callback';
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgetsError, setBudgetsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
       const fetchBudgets = async () => {
         try {
           const response = await api.get('/budget');
-          setBudgets(response.data);
-        } catch (error) {
-          // Handle the error appropriately
+          
+          // Check if response.data is an array
+          if (Array.isArray(response.data)) {
+            setBudgets(response.data);
+          } else if (response.data && typeof response.data === 'object') {
+            // If it's an object with a data property that is an array
+            if (Array.isArray(response.data.data)) {
+              setBudgets(response.data.data);
+            } else {
+              setBudgets([]);
+              setBudgetsError('Invalid data format received from server');
+            }
+          } else {
+            setBudgets([]);
+            setBudgetsError('Unexpected data format received from server');
+          }
+        } catch (error: any) {
+          setBudgets([]);
+          
+          // Get the error message from the response
+          if (error.response?.data?.message) {
+            setBudgetsError(error.response.data.message);
+          } else if (error.message) {
+            setBudgetsError(error.message);
+          } else {
+            setBudgetsError('Failed to load budgets. Please try again later.');
+          }
         }
       };
       fetchBudgets();
+    } else {
+      // Reset budgets when not authenticated
+      setBudgets([]);
+      setBudgetsError(null);
     }
   }, [isAuthenticated]);
 
@@ -37,6 +66,11 @@ const AppRoutes: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <HeaderWithNavigate />
       <main className="pt-16 flex-grow">
+        {budgetsError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-4 mb-4" role="alert">
+            <p>{budgetsError}</p>
+          </div>
+        )}
         <Routes>
           <Route
             path="/"

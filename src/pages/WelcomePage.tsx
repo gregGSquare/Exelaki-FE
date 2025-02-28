@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ErrorResponse, useNavigate } from 'react-router-dom';
 import { useBudget } from '../contexts/BudgetContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api from '../services/axios';
 import { Budget } from '../types/budget';
 import { getCurrencyList } from '../utils/currency';
-import { handleApiError, getUserFriendlyMessage } from '../utils/errorHandler';
+import { handleApiError, getUserFriendlyMessage, ErrorType } from '../utils/errorHandler';
 
 interface WelcomePageProps {
   budgets: Budget[];
@@ -81,29 +81,28 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
         description
       });
       const newBudget = response.data;
-      setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
+      
+      // Ensure budgets is an array before updating it
+      if (Array.isArray(budgets)) {
+        setBudgets((prevBudgets) => [...prevBudgets, newBudget]);
+      } else {
+        // If budgets is not an array, initialize it with the new budget
+        setBudgets([newBudget]);
+      }
+      
       setCurrentBudgetId(newBudget._id);
       setShowCreateModal(false);
       showNotification('Budget created successfully', 'success');
       navigate(`/dashboard/${newBudget._id}`);
     } catch (error: any) {
-      // Process the error using our utility
-      const processedError = handleApiError(error);
-      
-      // Prioritize the details field which contains the specific error message
-      let errorMessage = processedError.details || processedError.message || 'An unexpected error occurred';
-      
-      // If we still have an object, try to extract useful information
-      if (typeof errorMessage === 'object') {
-        errorMessage = JSON.stringify(errorMessage);
+      // Get the error message from the response
+      if (error.response?.data?.message) {
+        showNotification(error.response.data.message, 'error');
+      } else if (error.message) {
+        showNotification(error.message, 'error');
+      } else {
+        showNotification('Failed to create budget', 'error');
       }
-      
-      // Check for the specific case we're seeing in the screenshot
-      if (errorMessage === "[object Object]") {
-        errorMessage = "A budget for this month and year already exists. Please choose a different month or year.";
-      }
-      
-      showNotification(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -124,29 +123,28 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
     
     try {
       await api.delete(`/budget/${budgetToDelete._id}`);
-      setBudgets((prevBudgets) => 
-        prevBudgets.filter((b) => b._id !== budgetToDelete._id)
-      );
+      
+      // Ensure budgets is an array before updating it
+      if (Array.isArray(budgets)) {
+        setBudgets((prevBudgets) => 
+          prevBudgets.filter((b) => b._id !== budgetToDelete._id)
+        );
+      } else {
+        // If budgets is not an array, initialize it as an empty array
+        setBudgets([]);
+      }
+      
       showNotification(`Budget "${budgetToDelete.name}" deleted successfully`, 'success');
       setBudgetToDelete(null);
     } catch (error: any) {
-      // Process the error using our utility
-      const processedError = handleApiError(error);
-      
-      // Prioritize the details field which contains the specific error message
-      let errorMessage = processedError.details || processedError.message || 'An unexpected error occurred while deleting the budget';
-      
-      // If we still have an object, try to extract useful information
-      if (typeof errorMessage === 'object') {
-        errorMessage = JSON.stringify(errorMessage);
+      // Get the error message from the response
+      if (error.response?.data?.message) {
+        showNotification(error.response.data.message, 'error');
+      } else if (error.message) {
+        showNotification(error.message, 'error');
+      } else {
+        showNotification('Failed to delete budget', 'error');
       }
-      
-      // Check for the specific case we're seeing in the screenshot
-      if (errorMessage === "[object Object]") {
-        errorMessage = "Unable to delete the budget. It may be in use or have associated entries.";
-      }
-      
-      showNotification(errorMessage, 'error');
     }
   };
 
@@ -178,7 +176,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
 
         {/* Budgets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {budgets.map((budget) => (
+          {Array.isArray(budgets) ? budgets.map((budget) => (
             <div
               key={budget._id}
               onClick={() => handleSelectBudget(budget._id)}
@@ -212,7 +210,11 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
                 </span>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="col-span-3 text-center py-12">
+              <p className="text-gray-500">Loading budgets...</p>
+            </div>
+          )}
         </div>
 
         {/* Create Budget Modal */}
@@ -339,7 +341,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
         )}
 
         {/* Empty State */}
-        {budgets.length === 0 && (
+        {Array.isArray(budgets) && budgets.length === 0 && (
           <div className="text-center py-12">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
