@@ -23,6 +23,9 @@ const Dashboard: React.FC = () => {
   const budgetId = id || "";
   const { setCurrentBudgetId, setCurrentCurrencyCode, currentCurrencyCode } = useBudget();
   const [budgetName, setBudgetName] = useState("");
+  const [budgetMonth, setBudgetMonth] = useState<number | null>(null);
+  const [budgetYear, setBudgetYear] = useState<number | null>(null);
+  const [budgetType, setBudgetType] = useState("");
   const { isAuthenticated } = useAuth();
   const { showNotification } = useNotification();
   const { incomes, expenses, savings, fetchData } = useFetchData(budgetId);
@@ -101,8 +104,31 @@ const Dashboard: React.FC = () => {
         }
       });
       
-      setBudgetName(response.data.name);
-      setCurrentCurrencyCode(response.data.currency || "USD");
+      // Check if the response has the expected properties
+      if (response.data && response.data.success) {
+        // The actual budget data is nested inside the 'data' property
+        const budgetData = response.data.data;
+        
+        if (budgetData) {
+          // Extract values from the budget data
+          const name = budgetData.name || '';
+          const month = budgetData.month !== undefined ? budgetData.month : null;
+          const year = budgetData.year !== undefined ? budgetData.year : null;
+          const type = budgetData.budgetType || '';
+          const currency = budgetData.currency || "USD";
+          
+          // Set state with the extracted values
+          setBudgetName(name);
+          setBudgetMonth(month);
+          setBudgetYear(year);
+          setBudgetType(type);
+          setCurrentCurrencyCode(currency);
+        } else {
+          showNotification('Failed to load budget details', 'error');
+        }
+      } else {
+        showNotification('Failed to load budget details', 'error');
+      }
     } catch (error: any) {
       const processedError = handleApiError(error);
       
@@ -126,20 +152,47 @@ const Dashboard: React.FC = () => {
     setIsAddToCategoryModalOpen(true);
   };
 
+  // Helper function to get month name
+  const getMonthName = (month: number | null) => {
+    if (month === null || month === undefined) return "";
+    const monthNames = ["January", "February", "March", "April", "May", "June", 
+                        "July", "August", "September", "October", "November", "December"];
+    // Ensure month is within valid range (1-12)
+    if (month < 1 || month > 12) return "";
+    return monthNames[month - 1]; // Adjust for 0-based array
+  };
+
+  // Format the budget period and type for display
+  const formatBudgetInfo = () => {
+    const monthName = getMonthName(budgetMonth);
+    const parts = [];
+    
+    if (monthName) parts.push(monthName);
+    if (budgetYear) parts.push(budgetYear.toString());
+    if (budgetType) parts.push(`• ${budgetType}`);
+    
+    return parts.join(' ');
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 mt-16">
+    <div className="container mx-auto px-4 py-4 mt-12">
       {/* Financial overview row */}
       <div className="bg-white shadow-sm rounded-lg px-2 sm:px-4 py-3 mb-6 overflow-x-auto">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-xl font-bold">{budgetName}</h1>
-            <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+            <div className="mb-2 sm:mb-0">
+              <h1 className="text-xl font-bold">{budgetName || "My Budget"}</h1>
+              <p className="text-sm text-gray-600">
+                {formatBudgetInfo()}
+              </p>
+            </div>
+            <div className="flex items-center mt-2 sm:mt-0 relative">
               {isEditingCurrency ? (
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 z-10 absolute right-0 bg-white p-2 rounded shadow-md">
                   <select
                     value={currentCurrencyCode}
                     onChange={(e) => handleCurrencyChange(e.target.value)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1"
+                    className="text-sm border border-gray-300 rounded px-2 py-1 w-full sm:w-40"
                   >
                     {currencies.map(({ code, name }) => (
                       <option key={code} value={code}>
@@ -149,7 +202,7 @@ const Dashboard: React.FC = () => {
                   </select>
                   <button
                     onClick={() => setIsEditingCurrency(false)}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap"
                   >
                     Cancel
                   </button>
@@ -158,6 +211,7 @@ const Dashboard: React.FC = () => {
                 <button
                   onClick={() => setIsEditingCurrency(true)}
                   className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  aria-label="Change currency"
                 >
                   <span className="mr-1">{currentCurrencyCode}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
