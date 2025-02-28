@@ -75,70 +75,101 @@ const Dashboard: React.FC = () => {
       return;
     }
 
+    if (!budgetId || budgetId === 'undefined' || budgetId === 'null') {
+      showNotification('Invalid budget ID. Redirecting to budgets page.', 'warning');
+      navigate('/budgets');
+      return;
+    }
+
     if (budgetId) {
       setCurrentBudgetId(budgetId);
-      fetchBudgetDetails(budgetId);
-      const loadIndicators = async () => {
-        try {
-          const indicators = await loadFinancialIndicators(budgetId);
-          setFinancialIndicators(indicators);
-        } catch (error) {
-          const processedError = handleApiError(error);
-          showNotification('Failed to load financial indicators', 'error');
-        }
+      
+      // Create a function to fetch budget details with retry logic
+      const fetchBudgetWithRetry = async () => {
+        let retryCount = 0;
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second delay between retries
+        
+        const attemptFetch = async () => {
+          try {
+            await fetchBudgetDetails(budgetId);
+            // If successful, load financial indicators
+            try {
+              const indicators = await loadFinancialIndicators(budgetId);
+              setFinancialIndicators(indicators);
+            } catch (error) {
+              const processedError = handleApiError(error);
+              showNotification('Failed to load financial indicators', 'error');
+            }
+          } catch (error: any) {
+            const processedError = handleApiError(error);
+            
+            // If we get a 404 and haven't exceeded max retries, try again
+            if (processedError.statusCode === 404 && retryCount < maxRetries) {
+              retryCount++;
+              showNotification(`Budget not found. Retrying (${retryCount}/${maxRetries})...`, 'info');
+              setTimeout(attemptFetch, retryDelay);
+            } else if (processedError.statusCode === 404) {
+              // If we've exceeded retries, redirect to budgets page
+              showNotification('Budget not found after multiple attempts. Redirecting to budgets page.', 'warning');
+              navigate('/budgets');
+            } else {
+              showNotification(processedError.message, 'error');
+            }
+          }
+        };
+        
+        // Start the first attempt
+        await attemptFetch();
       };
-      loadIndicators();
+      
+      // Execute the fetch with retry logic
+      fetchBudgetWithRetry();
     }
   }, [navigate, budgetId, setCurrentBudgetId, isAuthenticated, setCurrentCurrencyCode, showNotification]);
 
   const fetchBudgetDetails = async (budgetId: string) => {
-    try {
-      // Get the token
-      const token = localStorage.getItem('accessToken');
+    // Validate budget ID
+    if (!budgetId || budgetId === 'undefined' || budgetId === 'null') {
+      throw new Error('Invalid budget ID');
+    }
+    
+    // Get the token
+    const token = localStorage.getItem('accessToken');
+    
+    // Make the request
+    const response = await api.get(`/budget/${budgetId}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    // Check if the response has the expected properties
+    if (response.data && response.data.success) {
+      // The actual budget data is nested inside the 'data' property
+      const budgetData = response.data.data;
       
-      // Make the request
-      const response = await api.get(`/budget/${budgetId}`, {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      // Check if the response has the expected properties
-      if (response.data && response.data.success) {
-        // The actual budget data is nested inside the 'data' property
-        const budgetData = response.data.data;
+      if (budgetData) {
+        // Extract values from the budget data
+        const name = budgetData.name || '';
+        const month = budgetData.month !== undefined ? budgetData.month : null;
+        const year = budgetData.year !== undefined ? budgetData.year : null;
+        const type = budgetData.budgetType || '';
+        const currency = budgetData.currency || "USD";
         
-        if (budgetData) {
-          // Extract values from the budget data
-          const name = budgetData.name || '';
-          const month = budgetData.month !== undefined ? budgetData.month : null;
-          const year = budgetData.year !== undefined ? budgetData.year : null;
-          const type = budgetData.budgetType || '';
-          const currency = budgetData.currency || "USD";
-          
-          // Set state with the extracted values
-          setBudgetName(name);
-          setBudgetMonth(month);
-          setBudgetYear(year);
-          setBudgetType(type);
-          setCurrentCurrencyCode(currency);
-        } else {
-          showNotification('Failed to load budget details', 'error');
-        }
+        // Set state with the extracted values
+        setBudgetName(name);
+        setBudgetMonth(month);
+        setBudgetYear(year);
+        setBudgetType(type);
+        setCurrentCurrencyCode(currency);
+        return true;
       } else {
-        showNotification('Failed to load budget details', 'error');
+        throw new Error('Failed to load budget details: Missing budget data');
       }
-    } catch (error: any) {
-      const processedError = handleApiError(error);
-      
-      // Handle 404 errors specifically
-      if (processedError.statusCode === 404) {
-        showNotification('Budget not found. Redirecting to budgets page.', 'warning');
-        navigate('/budgets');
-      } else {
-        showNotification(processedError.message, 'error');
-      }
+    } else {
+      throw new Error('Failed to load budget details: Invalid response format');
     }
   };
 
