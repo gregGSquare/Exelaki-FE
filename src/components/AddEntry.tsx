@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";  
 import api from "../services/axios";
 import { Category, CategoryType } from "../types/categoryTypes";
-import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags, EntryType } from "../types/entryTypes";
+import { CreateEntryPayload, EntryFlexibility, EntryRecurrence, EntryTags, EntryType, Entry } from "../types/entryTypes";
 
 interface AddEntryProps {
   onAdd: () => void;
@@ -14,9 +14,22 @@ interface AddEntryProps {
   disableTypeSelection?: boolean;
   disableCategorySelection?: boolean;
   hideTags?: boolean;
+  editEntry?: Entry | null;
 }
 
-const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose, budgetId, preselectedType, preselectedCategoryId, disableTypeSelection = false, disableCategorySelection = false, hideTags = false }) => {
+const AddEntry: React.FC<AddEntryProps> = ({ 
+  onAdd, 
+  categories, 
+  isOpen, 
+  onClose, 
+  budgetId, 
+  preselectedType, 
+  preselectedCategoryId, 
+  disableTypeSelection = false, 
+  disableCategorySelection = false, 
+  hideTags = false,
+  editEntry = null
+}) => {
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -30,27 +43,59 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
   const [tags, setTags] = useState<EntryTags[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Reset form when modal is opened or closed
   useEffect(() => {
-    if (isOpen) {  // Only set when modal opens
-      if (preselectedType) {
-        setSelectedType(preselectedType);
-        
-        // Automatically select the first category for INCOME or SAVING
-        if (preselectedType === 'INCOME' || preselectedType === 'SAVING') {
-          const matchingCategories = categories.filter(cat => cat.type === preselectedType);
-          if (matchingCategories.length > 0) {
-            setSelectedCategoryId(matchingCategories[0]._id);
+    if (isOpen) {
+      // If editing an existing entry, populate the form with its values
+      if (editEntry) {
+        setName(editEntry.name || "");
+        setAmount(editEntry.amount?.toString() || "");
+        setSelectedType(editEntry.category.type || "");
+        setSelectedCategoryId(editEntry.category._id || "");
+        setDueDayOfMonth(editEntry.dueDayOfMonth?.toString() || "");
+        setFlexibility(editEntry.flexibility || "FIXED");
+        setRecurrence(editEntry.recurrence || "MONTHLY");
+        setTags(editEntry.tags || []);
+      } else {
+        // For new entries
+        if (preselectedType) {
+          setSelectedType(preselectedType);
+          
+          // Automatically select the first category for INCOME or SAVING if no specific category is selected
+          if ((preselectedType === 'INCOME' || preselectedType === 'SAVING') && !preselectedCategoryId) {
+            const matchingCategories = categories.filter(cat => cat.type === preselectedType);
+            if (matchingCategories.length > 0) {
+              setSelectedCategoryId(matchingCategories[0]._id);
+            }
           }
         }
       }
+    } else {
+      // Reset form when modal is closed
+      resetForm();
     }
-  }, [preselectedType, categories, isOpen]);  // Added isOpen to dependencies
+  }, [isOpen, preselectedType, categories, preselectedCategoryId, editEntry]);
 
+  // Set selected category ID when preselectedCategoryId changes
   useEffect(() => {
     if (preselectedCategoryId) {
       setSelectedCategoryId(preselectedCategoryId);
     }
   }, [preselectedCategoryId]);
+
+  // Update form when editEntry changes
+  useEffect(() => {
+    if (editEntry) {
+      setName(editEntry.name || "");
+      setAmount(editEntry.amount?.toString() || "");
+      setSelectedType(editEntry.category.type || "");
+      setSelectedCategoryId(editEntry.category._id || "");
+      setDueDayOfMonth(editEntry.dueDayOfMonth?.toString() || "");
+      setFlexibility(editEntry.flexibility || "FIXED");
+      setRecurrence(editEntry.recurrence || "MONTHLY");
+      setTags(editEntry.tags || []);
+    }
+  }, [editEntry]);
 
   const resetForm = () => {
     setName("");
@@ -63,6 +108,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
     setFlexibility("FIXED");
     setRecurrence("MONTHLY");
     setTags([]);
+    setError(null);
   };
 
   const handleTagToggle = (tag: EntryTags) => {
@@ -119,24 +165,46 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
         categoryId = categoryResponse.data._id;
       }
 
-      const payload: CreateEntryPayload = {
-        name: name.trim(),
-        amount: parseFloat(amount),
-        categoryId: categoryId,
-        budgetId: budgetId,
-        type: selectedType as EntryType,
-        flexibility: selectedType === 'EXPENSE' ? flexibility : "FIXED",
-        recurrence: selectedType === 'EXPENSE' ? recurrence : "MONTHLY",
-        tags: selectedType === 'EXPENSE' ? tags : [EntryTags.MISC],
-        ...(selectedType === 'EXPENSE' && dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
-      };
-
-      const response = await api.post("/entries", payload);
-      
-      if (response.status === 201 || response.status === 200) {
-        resetForm();
+      // If we're editing, update the editEntry object with the form values
+      if (editEntry) {
+        // Update the editEntry object with the form values
+        if (editEntry) {
+          editEntry.name = name.trim();
+          editEntry.amount = parseFloat(amount);
+          editEntry.category._id = categoryId;
+          editEntry.category.type = selectedType as CategoryType;
+          editEntry.flexibility = selectedType === 'EXPENSE' ? flexibility : "FIXED";
+          editEntry.recurrence = selectedType === 'EXPENSE' ? recurrence : "MONTHLY";
+          editEntry.tags = selectedType === 'EXPENSE' ? tags : [EntryTags.MISC];
+          if (selectedType === 'EXPENSE' && dueDayOfMonth) {
+            editEntry.dueDayOfMonth = parseInt(dueDayOfMonth);
+          }
+        }
+        
+        // Call the onAdd function to handle the edit submission
         await onAdd();
         onClose();
+      } else {
+        // For new entries, make the API call directly
+        const payload = {
+          name: name.trim(),
+          amount: parseFloat(amount),
+          categoryId: categoryId,
+          budgetId: budgetId,
+          type: selectedType as EntryType,
+          flexibility: selectedType === 'EXPENSE' ? flexibility : "FIXED",
+          recurrence: selectedType === 'EXPENSE' ? recurrence : "MONTHLY",
+          tags: selectedType === 'EXPENSE' ? tags : [EntryTags.MISC],
+          ...(selectedType === 'EXPENSE' && dueDayOfMonth && { dueDayOfMonth: parseInt(dueDayOfMonth) }),
+        };
+        
+        const response = await api.post("/entries", payload);
+        
+        if (response.status === 201 || response.status === 200) {
+          resetForm();
+          await onAdd();
+          onClose();
+        }
       }
     } catch (error: any) {
       setError(error.response?.data?.message || "Failed to create entry");
@@ -149,7 +217,9 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium text-gray-900">Add New Entry</h2>
+          <h2 className="text-lg font-medium text-gray-900">
+            {editEntry ? `Edit ${selectedType.charAt(0) + selectedType.slice(1).toLowerCase()}` : `Add New Entry`}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -332,7 +402,7 @@ const AddEntry: React.FC<AddEntryProps> = ({ onAdd, categories, isOpen, onClose,
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Add Entry
+              {editEntry ? 'Save Changes' : 'Add Entry'}
             </button>
           </div>
         </form>

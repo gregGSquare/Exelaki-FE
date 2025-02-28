@@ -8,7 +8,7 @@ interface CategoryTablesProps {
   entryType: 'INCOME' | 'EXPENSE' | 'SAVING';
   handleEdit: (entry: Entry, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
   handleDelete: (id: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
-  onAddToCategory: (categoryId: string, categoryName: string) => void;
+  onAddToCategory: (categoryId: string, categoryName: string, type: 'INCOME' | 'EXPENSE' | 'SAVING') => void;
 }
 
 const CategoryTables: React.FC<CategoryTablesProps> = ({
@@ -36,19 +36,59 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
     return acc;
   }, {} as Record<string, { id: string; name: string; entries: Entry[]; total: number }>);
 
+  // Get color scheme based on entry type
+  const getColorScheme = () => {
+    switch (entryType) {
+      case 'INCOME':
+        return {
+          header: 'bg-primary-50 border-primary-100',
+          headerText: 'text-primary-700',
+          button: 'text-primary-600 hover:text-primary-800 hover:bg-primary-50',
+          total: 'text-primary-700',
+          icon: 'text-primary-400',
+        };
+      case 'EXPENSE':
+        return {
+          header: 'bg-red-50 border-red-100',
+          headerText: 'text-red-700',
+          button: 'text-red-600 hover:text-red-800 hover:bg-red-50',
+          total: 'text-red-700',
+          icon: 'text-red-400',
+        };
+      case 'SAVING':
+        return {
+          header: 'bg-secondary-50 border-secondary-100',
+          headerText: 'text-secondary-700',
+          button: 'text-secondary-600 hover:text-secondary-800 hover:bg-secondary-50',
+          total: 'text-secondary-700',
+          icon: 'text-secondary-400',
+        };
+      default:
+        return {
+          header: 'bg-neutral-50 border-neutral-100',
+          headerText: 'text-neutral-700',
+          button: 'text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50',
+          total: 'text-neutral-700',
+          icon: 'text-neutral-400',
+        };
+    }
+  };
+
+  const colors = getColorScheme();
+
   return (
     <div className="space-y-6">
       {Object.values(entriesByCategory).map((category) => (
-        <div key={category.id} className="bg-white rounded-lg border border-gray-200">
-          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
-            <h3 className="text-sm font-medium text-gray-900">{category.name}</h3>
+        <div key={category.id} className="bg-white/80 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 overflow-hidden transition-all hover:shadow-card">
+          <div className={`flex justify-between items-center px-4 py-3 border-b ${colors.header}`}>
+            <h3 className={`text-sm font-medium ${colors.headerText}`}>{category.name}</h3>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">
+              <span className={`text-sm font-semibold ${colors.total}`}>
                 {formatCurrency(category.total, currentCurrencyCode)}
               </span>
               <button
-                onClick={() => onAddToCategory(category.id, category.name)}
-                className="text-blue-600 hover:text-blue-800"
+                onClick={() => onAddToCategory(category.id, category.name, entryType)}
+                className={`p-1 rounded-full transition-colors ${colors.button}`}
                 title="Add to this category"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,37 +97,42 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
               </button>
             </div>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-neutral-100">
             {category.entries.map((entry) => (
-              <div key={entry._id} className="px-4 py-3 flex justify-between items-center">
+              <div key={entry._id} className="px-4 py-3 flex justify-between items-center hover:bg-neutral-50 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-sm text-gray-900">{entry.name}</span>
+                  <span className="text-sm font-medium text-neutral-800">{entry.name}</span>
                   {entry.dueDayOfMonth && (
-                    <span className="text-xs text-gray-500">
-                      Due: Day {entry.dueDayOfMonth}
-                    </span>
+                    <div className="flex items-center mt-1">
+                      <svg className="w-3 h-3 mr-1 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs text-neutral-500">
+                        Due: Day {entry.dueDayOfMonth}
+                      </span>
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-neutral-800">
                     {formatCurrency(Number(entry.amount), currentCurrencyCode)}
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-1">
                     <button
                       onClick={() => handleEdit(entry, entryType)}
-                      className="text-gray-400 hover:text-blue-500"
+                      className="p-1.5 rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-primary-500 transition-colors"
                       title="Edit entry"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(entry._id, entryType)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="p-1.5 rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-red-500 transition-colors"
                       title="Delete entry"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -98,6 +143,16 @@ const CategoryTables: React.FC<CategoryTablesProps> = ({
           </div>
         </div>
       ))}
+      
+      {Object.values(entriesByCategory).length === 0 && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 p-8 flex flex-col items-center justify-center">
+          <svg className="w-12 h-12 text-neutral-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p className="text-neutral-500 text-sm">No {entryType.toLowerCase()} entries found</p>
+          <p className="text-neutral-400 text-xs mt-1">Add some entries to get started</p>
+        </div>
+      )}
     </div>
   );
 };
