@@ -8,7 +8,7 @@ interface Notification {
 }
 
 interface NotificationContextProps {
-  showNotification: (message: string, type: ToastType) => void;
+  showNotification: (message: any, type: ToastType) => void;
   hideNotification: (id: string) => void;
 }
 
@@ -17,9 +17,29 @@ const NotificationContext = createContext<NotificationContextProps | undefined>(
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const showNotification = (message: string, type: ToastType) => {
+  const showNotification = (message: any, type: ToastType) => {
     const id = Date.now().toString();
-    setNotifications(prev => [...prev, { id, message, type }]);
+    
+    // Extract message from error response or use as is if it's a string
+    let finalMessage: string;
+    
+    if (typeof message === 'string') {
+      finalMessage = message;
+    } else if (message && typeof message.message === 'string') {
+      // Extract message from error response object
+      finalMessage = message.message;
+    } else if (message && typeof message === 'object') {
+      // Try to stringify the object
+      try {
+        finalMessage = JSON.stringify(message);
+      } catch (e) {
+        finalMessage = 'An error occurred';
+      }
+    } else {
+      finalMessage = 'An error occurred';
+    }
+    
+    setNotifications(prev => [...prev, { id, message: finalMessage, type }]);
   };
 
   const hideNotification = (id: string) => {
@@ -29,14 +49,28 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   return (
     <NotificationContext.Provider value={{ showNotification, hideNotification }}>
       {children}
-      {notifications.map(notification => (
-        <ToastNotification
-          key={notification.id}
-          message={notification.message}
-          type={notification.type}
-          onClose={() => hideNotification(notification.id)}
-        />
-      ))}
+      <div 
+        className="notification-container" 
+        style={{ 
+          position: 'fixed', 
+          top: '1rem', 
+          right: '1rem', 
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          maxWidth: '24rem'
+        }}
+      >
+        {notifications.map(notification => (
+          <ToastNotification
+            key={notification.id}
+            message={notification.message}
+            type={notification.type}
+            onClose={() => hideNotification(notification.id)}
+          />
+        ))}
+      </div>
     </NotificationContext.Provider>
   );
 };
