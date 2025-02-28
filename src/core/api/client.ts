@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken } from '../utils/auth0';
-import { handleApiError, ErrorType } from '../../utils/errorHandler';
+import { handleApiError, ErrorType, isErrorType } from '../errors';
 
 /**
  * API configuration
@@ -62,8 +62,9 @@ export const createApiClient = (): AxiosInstance => {
       return config;
     },
     (error) => {
-      handleApiError(error);
-      return Promise.reject(error);
+      // Process request errors
+      const processedError = handleApiError(error);
+      return Promise.reject(processedError);
     }
   );
   
@@ -75,7 +76,7 @@ export const createApiClient = (): AxiosInstance => {
       const processedError = handleApiError(error);
       
       // Handle authentication errors
-      if (processedError.type === ErrorType.AUTHENTICATION && !window._logoutTriggered) {
+      if (isErrorType(processedError, ErrorType.AUTHENTICATION) && !window._logoutTriggered) {
         // Set flag to prevent multiple redirects
         window._logoutTriggered = true;
         
