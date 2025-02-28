@@ -51,6 +51,8 @@ const Dashboard: React.FC = () => {
   const [isAddToCategoryModalOpen, setIsAddToCategoryModalOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [isEditCurrencyModalOpen, setIsEditCurrencyModalOpen] = useState(false);
+  const [isEditBudgetNameModalOpen, setIsEditBudgetNameModalOpen] = useState(false);
+  const [newBudgetName, setNewBudgetName] = useState("");
 
   const currencies = useMemo<CurrencyOption[]>(() => getCurrencyList(), []);
 
@@ -62,6 +64,18 @@ const Dashboard: React.FC = () => {
       const indicators = await loadFinancialIndicators(budgetId);
       setFinancialIndicators(indicators);
       showNotification('Currency updated successfully', 'success');
+    } catch (error) {
+      const processedError = handleApiError(error);
+      showNotification(processedError.message, 'error');
+    }
+  };
+
+  const handleBudgetNameChange = async (newName: string) => {
+    try {
+      await api.put(`/budget/${budgetId}`, { name: newName });
+      setBudgetName(newName);
+      setIsEditBudgetNameModalOpen(false);
+      showNotification('Budget name updated successfully', 'success');
     } catch (error) {
       const processedError = handleApiError(error);
       showNotification(processedError.message, 'error');
@@ -222,9 +236,17 @@ const Dashboard: React.FC = () => {
     const monthName = getMonthName(budgetMonth);
     const parts = [];
     
-    if (monthName) parts.push(monthName);
-    if (budgetYear) parts.push(budgetYear.toString());
-    if (budgetType) parts.push(`• ${budgetType}`);
+    if (budgetType) {
+      if (budgetType === "MONTHLY" && monthName && budgetYear) {
+        parts.push(`${monthName} ${budgetYear}`);
+      } else if (budgetType === "ANNUAL" && budgetYear) {
+        parts.push(`Annual Budget ${budgetYear}`);
+      } else if (budgetType === "CUSTOM") {
+        parts.push("Custom Budget");
+      } else {
+        parts.push(budgetType);
+      }
+    }
     
     return parts.join(' ');
   };
@@ -243,9 +265,28 @@ const Dashboard: React.FC = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-neutral-800">Financial Dashboard</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-neutral-800">{budgetName || "Financial Dashboard"}</h1>
+                <button
+                  onClick={() => {
+                    setNewBudgetName(budgetName);
+                    setIsEditBudgetNameModalOpen(true);
+                  }}
+                  className="p-1.5 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  title="Edit Budget Name"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                {budgetType && (
+                  <span className="px-2 py-1 text-xs font-medium text-primary-700 bg-primary-100 rounded-full">
+                    {budgetType}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-neutral-500">
-                Track your income, expenses, and savings in one place
+                {formatBudgetInfo() ? formatBudgetInfo() : "Track your income, expenses, and savings in one place"}
               </p>
             </div>
             
@@ -744,6 +785,55 @@ const Dashboard: React.FC = () => {
         disableTypeSelection={true}
         disableCategorySelection={false}
       />
+
+      {/* Edit Budget Name Modal */}
+      {isEditBudgetNameModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Edit Budget Name</h2>
+              <button
+                onClick={() => setIsEditBudgetNameModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="budgetName" className="block text-sm font-medium text-gray-700 mb-1">
+                Budget Name
+              </label>
+              <input
+                type="text"
+                id="budgetName"
+                value={newBudgetName}
+                onChange={(e) => setNewBudgetName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsEditBudgetNameModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleBudgetNameChange(newBudgetName)}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                disabled={!newBudgetName.trim()}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
