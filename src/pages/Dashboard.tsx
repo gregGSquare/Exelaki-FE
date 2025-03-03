@@ -72,10 +72,21 @@ const Dashboard: React.FC = () => {
 
   const handleBudgetNameChange = async (newName: string) => {
     try {
-      await api.put(`/budget/${budgetId}`, { name: newName });
+      await api.put(`/budget/${budgetId}`, {
+        name: newName,
+        budgetType: budgetType,
+        month: budgetType === "MONTHLY" ? budgetMonth : null,
+        year: budgetType === "MONTHLY" ? budgetYear : null,
+        currency: currentCurrencyCode
+      });
+      
       setBudgetName(newName);
       setIsEditBudgetNameModalOpen(false);
-      showNotification('Budget name updated successfully', 'success');
+      showNotification('Budget settings updated successfully', 'success');
+      
+      // Refresh financial indicators after updating settings
+      const indicators = await loadFinancialIndicators(budgetId);
+      setFinancialIndicators(indicators);
     } catch (error) {
       const processedError = handleApiError(error);
       showNotification(processedError.message, 'error');
@@ -273,7 +284,7 @@ const Dashboard: React.FC = () => {
                     setIsEditBudgetNameModalOpen(true);
                   }}
                   className="p-1.5 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                  title="Edit Budget Name"
+                  title="Edit Budget Settings"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -289,125 +300,29 @@ const Dashboard: React.FC = () => {
                 {formatBudgetInfo() ? formatBudgetInfo() : "Track your income, expenses, and savings in one place"}
               </p>
             </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <select
-                  value={currentCurrencyCode}
-                  onChange={(e) => handleCurrencyChange(e.target.value)}
-                  className="appearance-none bg-white border border-neutral-200 rounded-lg py-2 pl-3 pr-10 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  {currencies.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.code} ({currency.name})
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsEditCurrencyModalOpen(true)}
-                className="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                title="Edit Currency"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Financial Summary Cards */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Income Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 p-5 transition-all hover:shadow-card group">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500 mb-1">Total Income</p>
-                <h3 className="text-2xl font-bold text-primary-600 group-hover:text-primary-700 transition-colors">
-                  {formatCurrency(totalIncome, currentCurrencyCode)}
-                </h3>
+            {/* Balance summary */}
+            <div className="flex flex-wrap items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-500">Income:</span>
+                <span className="font-medium text-primary-600">{formatCurrency(totalIncome, currentCurrencyCode)}</span>
               </div>
-              <div className="p-2 bg-primary-50 rounded-lg text-primary-500 group-hover:bg-primary-100 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-500">Expenses:</span>
+                <span className="font-medium text-red-600">{formatCurrency(totalExpenses, currentCurrencyCode)}</span>
               </div>
-            </div>
-          </div>
-
-          {/* Expense Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 p-5 transition-all hover:shadow-card group">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500 mb-1">Total Expenses</p>
-                <h3 className="text-2xl font-bold text-red-600 group-hover:text-red-700 transition-colors">
-                  {formatCurrency(totalExpenses, currentCurrencyCode)}
-                </h3>
-              </div>
-              <div className="p-2 bg-red-50 rounded-lg text-red-500 group-hover:bg-red-100 transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-              </div>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={() => setIsAddExpenseModalOpen(true)}
-                className="w-full flex items-center justify-center text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 py-2 rounded-lg transition-colors border border-red-100"
-              >
-                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add New Expense
-              </button>
-            </div>
-          </div>
-
-          {/* Balance Card */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 p-5 transition-all hover:shadow-card group">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-500 mb-1">Balance</p>
-                <h3 className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600 group-hover:text-green-700' : 'text-red-600 group-hover:text-red-700'} transition-colors`}>
+              <div className="flex items-center gap-2">
+                <span className="text-neutral-500">Balance:</span>
+                <span className={`font-medium ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(balance, currentCurrencyCode)}
-                </h3>
-              </div>
-              <div className={`p-2 ${balance >= 0 ? 'bg-green-50 text-green-500 group-hover:bg-green-100' : 'bg-red-50 text-red-500 group-hover:bg-red-100'} rounded-lg transition-colors`}>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                </svg>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="w-full bg-neutral-100 rounded-full h-2.5">
-                <div 
-                  className={`h-2.5 rounded-full ${
-                    totalExpenses / totalIncome > 0.8 
-                      ? 'bg-red-500' 
-                      : totalExpenses / totalIncome > 0.6 
-                        ? 'bg-yellow-500' 
-                        : 'bg-green-500'
-                  }`}
-                  style={{ width: `${totalIncome > 0 ? Math.min(100, (totalExpenses / totalIncome) * 100) : 100}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between mt-1">
-                <span className="text-xs text-neutral-500">
-                  {totalIncome > 0 ? Math.round((totalExpenses / totalIncome) * 100) : 0}% of income spent
                 </span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Content area starts here */}
 
       {/* Income and Savings Overview */}
       <div className="container mx-auto px-4 py-2">
@@ -786,12 +701,12 @@ const Dashboard: React.FC = () => {
         disableCategorySelection={false}
       />
 
-      {/* Edit Budget Name Modal */}
+      {/* Edit Budget Settings Modal */}
       {isEditBudgetNameModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Edit Budget Name</h2>
+              <h2 className="text-lg font-medium text-gray-900">Edit Budget Settings</h2>
               <button
                 onClick={() => setIsEditBudgetNameModalOpen(false)}
                 className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -802,21 +717,127 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
             
-            <div className="mb-4">
-              <label htmlFor="budgetName" className="block text-sm font-medium text-gray-700 mb-1">
-                Budget Name
-              </label>
-              <input
-                type="text"
-                id="budgetName"
-                value={newBudgetName}
-                onChange={(e) => setNewBudgetName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+            <div className="space-y-4">
+              {/* Budget Name */}
+              <div>
+                <label htmlFor="budgetName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Budget Name
+                </label>
+                <input
+                  type="text"
+                  id="budgetName"
+                  value={newBudgetName}
+                  onChange={(e) => setNewBudgetName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+              </div>
+
+              {/* Budget Type */}
+              <div>
+                <label htmlFor="budgetType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Budget Type
+                </label>
+                <select
+                  id="budgetType"
+                  value={budgetType}
+                  onChange={(e) => setBudgetType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="MONTHLY">Monthly</option>
+                  <option value="ANNUAL">Annual</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </div>
+
+              {/* Month and Year (shown only for MONTHLY type) */}
+              {budgetType === "MONTHLY" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="budgetMonth" className="block text-sm font-medium text-gray-700 mb-1">
+                      Month
+                    </label>
+                    <select
+                      id="budgetMonth"
+                      value={budgetMonth || 1}
+                      onChange={(e) => setBudgetMonth(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="budgetYear" className="block text-sm font-medium text-gray-700 mb-1">
+                      Year
+                    </label>
+                    <select
+                      id="budgetYear"
+                      value={budgetYear || new Date().getFullYear()}
+                      onChange={(e) => setBudgetYear(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const year = new Date().getFullYear() - 5 + i;
+                        return (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Year only (shown only for ANNUAL type) */}
+              {budgetType === "ANNUAL" && (
+                <div>
+                  <label htmlFor="budgetYear" className="block text-sm font-medium text-gray-700 mb-1">
+                    Year
+                  </label>
+                  <select
+                    id="budgetYear"
+                    value={budgetYear || new Date().getFullYear()}
+                    onChange={(e) => setBudgetYear(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    {Array.from({ length: 10 }, (_, i) => {
+                      const year = new Date().getFullYear() - 5 + i;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+
+              {/* Currency */}
+              <div>
+                <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+                  Currency
+                </label>
+                <select
+                  id="currency"
+                  value={currentCurrencyCode}
+                  onChange={(e) => handleCurrencyChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {currencies.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.code} ({currency.name})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setIsEditBudgetNameModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -824,11 +845,14 @@ const Dashboard: React.FC = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleBudgetNameChange(newBudgetName)}
+                onClick={() => {
+                  handleBudgetNameChange(newBudgetName);
+                  // Additional logic to update other settings will be needed here
+                }}
                 className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 disabled={!newBudgetName.trim()}
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>

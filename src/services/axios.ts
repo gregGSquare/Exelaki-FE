@@ -42,7 +42,7 @@ api.interceptors.response.use(
     const processedError = handleApiError(error);
     
     // Handle authentication errors
-    if (processedError.type === 'AUTHENTICATION' && !window._logoutTriggered) {
+    if ((processedError.type === 'AUTHENTICATION' || processedError.statusCode === 401) && !window._logoutTriggered) {
       // Set flag to prevent multiple redirects
       window._logoutTriggered = true;
       
