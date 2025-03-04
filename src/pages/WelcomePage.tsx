@@ -97,6 +97,31 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ budgets, setBudgets }) => {
           
           // Validate budget ID before setting it
           if (budgetData._id && typeof budgetData._id === 'string') {
+            // Create default expense categories if this is a monthly budget
+            if (budgetType === "MONTHLY") {
+              const defaultCategories = [
+                "Subscriptions",
+                "Insurances",
+                "Debt",
+                "Transportation",
+                "Utilities",
+                "Entertainment/Shopping"
+              ];
+
+              // Create each default category
+              for (const categoryName of defaultCategories) {
+                try {
+                  await api.post('/categories', {
+                    name: categoryName,
+                    type: "EXPENSE"
+                  });
+                } catch (error) {
+                  // If category already exists, continue silently
+                  console.log(`Category ${categoryName} may already exist`);
+                }
+              }
+            }
+
             // Set the current budget ID in the context
             setCurrentBudgetId(budgetData._id);
             

@@ -362,6 +362,21 @@ const AddEntry: React.FC<AddEntryProps> = ({
                   <option value="ONE_TIME">One Time</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Flexibility
+                </label>
+                <select
+                  value={flexibility}
+                  onChange={(e) => setFlexibility(e.target.value as EntryFlexibility)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="FIXED">Fixed</option>
+                  <option value="FLEXIBLE">Flexible</option>
+                  <option value="OPTIONAL">Optional</option>
+                </select>
+              </div>
             </>
           )}
 

@@ -105,3 +105,15 @@ export const fetchFinancialIndicators = async (budgetId: string) => {
     };
   }
 };
+
+export const deleteCategory = async (id: string) => {
+  try {
+    const response = await api.delete(`/categories/${id}`);
+    if (!response.status.toString().startsWith("2")) {
+      throw new Error(`Failed to delete category`);
+    }
+  } catch (error) {
+    const processedError = handleApiError(error);
+    throw processedError;
+  }
+};
