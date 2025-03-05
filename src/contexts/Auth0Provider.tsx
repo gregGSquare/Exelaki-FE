@@ -28,8 +28,8 @@ export const Auth0ProviderWithConfig: React.FC<Auth0ProviderWithConfigProps> = (
         scope: 'openid profile email',
         response_type: 'code',
       }}
-      useRefreshTokens={true}
-      cacheLocation="localstorage"
+      useRefreshTokens={false}
+      cacheLocation="memory"
     >
       {children}
     </Auth0Provider>

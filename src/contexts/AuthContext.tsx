@@ -132,38 +132,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set flag to prevent multiple redirects
     window._logoutTriggered = true;
     
-    // Clear local state first
-    localStorage.removeItem('accessToken');
+    // Clear all local storage and session storage
+    localStorage.clear(); // Clear ALL localStorage, not just the token
+    sessionStorage.clear();
+    
+    // Clear React state
     setUser(null);
     setBackendError(null);
     
-    try {
-      // Construct the Auth0 logout URL directly
-      const domain = process.env.REACT_APP_AUTH0_DOMAIN;
-      const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+    // Get Auth0 configuration
+    const domain = process.env.REACT_APP_AUTH0_DOMAIN;
+    const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
+    
+    if (domain && clientId) {
+      // Determine the correct returnTo URL based on environment
+      const returnTo = process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000'
+        : 'https://exelaki-fe.onrender.com';
       
-      if (domain && clientId) {
-        const returnTo = encodeURIComponent(window.location.origin);
-        
-        // Use the Auth0 logout endpoint directly
-        const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}&federated=true`;
-        
-        // Navigate to the logout URL
-        window.location.href = logoutUrl;
-      } else {
-        // Fallback to the standard Auth0 logout method
-        auth0Logout({ 
-          logoutParams: {
-            returnTo: window.location.origin
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Fallback to the standard Auth0 logout method
-      auth0Logout({ 
+      // Construct a complete logout URL that will clear all Auth0 sessions
+      const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(returnTo)}&federated=true`;
+      
+      // Force a complete page reload and navigation to the logout URL
+      window.location.href = logoutUrl;
+    } else {
+      // Fallback to standard Auth0 logout
+      auth0Logout({
         logoutParams: {
-          returnTo: window.location.origin
+          returnTo: window.location.origin,
+          federated: true
         }
       });
     }
