@@ -12,7 +12,11 @@ export enum EntryTags {
   SUBSCRIPTION = 'SUBSCRIPTION',
   ENTERTAINMENT = 'ENTERTAINMENT',
   MEDICAL = 'MEDICAL',
-  MISC = 'MISC'
+  MISC = 'MISC',
+  CAR = 'CAR',
+  TRAVEL = 'TRAVEL',
+  GIFT = 'GIFT',
+  OTHER = 'OTHER'
 }
 export type EntryType = 'EXPENSE' | 'INCOME' | 'SAVING';
 
