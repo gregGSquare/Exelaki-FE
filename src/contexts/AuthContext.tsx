@@ -44,13 +44,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUserProfile = async () => {
       if (auth0IsAuthenticated && auth0User) {
         try {
-          const token = await getAccessTokenSilently();
-          localStorage.setItem('accessToken', token);
+          // Check if we already have a valid token
+          let token = localStorage.getItem('accessToken');
           
-          // Fetch user profile from your backend
-          const response = await api.get('/auth/profile');
-          setUser(response.data);
-          setBackendError(null);
+          // If no token, try to get a new one
+          if (!token) {
+            token = await getAccessTokenSilently();
+            if (token) {
+              localStorage.setItem('accessToken', token);
+            }
+          }
+          
+          // Only try to fetch profile if we have a token
+          if (token) {
+            try {
+              // Fetch user profile from your backend
+              const response = await api.get('/auth/profile');
+              setUser(response.data);
+              setBackendError(null);
+            } catch (error: any) {
+              // If profile fetch fails due to invalid token, clear it and get a new one
+              if (error.statusCode === 401) {
+                localStorage.removeItem('accessToken');
+                token = await getAccessTokenSilently();
+                if (token) {
+                  localStorage.setItem('accessToken', token);
+                  // Retry profile fetch with new token
+                  const retryResponse = await api.get('/auth/profile');
+                  setUser(retryResponse.data);
+                  setBackendError(null);
+                }
+              } else {
+                throw error;
+              }
+            }
+          }
         } catch (error: any) {
           const processedError = handleApiError(error);
           setBackendError(processedError.message);
@@ -70,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else if (!auth0IsLoading) {
         setIsLoading(false);
+        // Clear any existing token if we're not authenticated
+        localStorage.removeItem('accessToken');
       }
     };
 

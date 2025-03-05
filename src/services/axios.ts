@@ -18,6 +18,7 @@ const api = axios.create({
 declare global {
   interface Window {
     _logoutTriggered?: boolean;
+    _tokenRefreshInProgress?: boolean;
   }
 }
 
@@ -42,13 +43,21 @@ api.interceptors.response.use(
     const processedError = handleApiError(error);
     
     // Handle authentication errors
-    if ((processedError.type === 'AUTHENTICATION' || processedError.statusCode === 401) && !window._logoutTriggered) {
-      // Set flag to prevent multiple redirects
-      window._logoutTriggered = true;
-      
-      // Clear the token and redirect to login
+    if ((processedError.type === 'AUTHENTICATION' || processedError.statusCode === 401)) {
+      // Clear the invalid token
       localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      
+      // Only redirect to login if we haven't already triggered a logout
+      // and we're not already on the login or callback page
+      if (!window._logoutTriggered && 
+          !window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/callback')) {
+        // Set flag to prevent multiple redirects
+        window._logoutTriggered = true;
+        
+        // Redirect to login
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(processedError);
