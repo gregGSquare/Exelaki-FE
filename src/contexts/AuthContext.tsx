@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window._logoutTriggered = true;
     
     // Clear all local storage and session storage
-    localStorage.clear(); // Clear ALL localStorage, not just the token
+    localStorage.clear();
     sessionStorage.clear();
     
     // Clear React state
@@ -144,25 +144,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const domain = process.env.REACT_APP_AUTH0_DOMAIN;
     const clientId = process.env.REACT_APP_AUTH0_CLIENT_ID;
     
-    if (domain && clientId) {
-      // Determine the correct returnTo URL based on environment
-      const returnTo = process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3000'
-        : 'https://exelaki-fe.onrender.com';
-      
-      // Construct a complete logout URL that will clear all Auth0 sessions
-      const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(returnTo)}&federated=true`;
-      
-      // Force a complete page reload and navigation to the logout URL
-      window.location.href = logoutUrl;
-    } else {
-      // Fallback to standard Auth0 logout
-      auth0Logout({
-        logoutParams: {
-          returnTo: window.location.origin,
-          federated: true
-        }
-      });
+    // Determine the correct returnTo URL based on environment
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const returnTo = isDevelopment 
+      ? 'http://localhost:3000'
+      : 'https://exelaki-fe.onrender.com';
+    
+    // Force a complete logout by directly navigating to Auth0's logout endpoint
+    try {
+      if (domain && clientId) {
+        // Construct a complete logout URL that will clear all Auth0 sessions
+        const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(returnTo)}`;
+              
+        // Force a complete page reload and navigation to the logout URL
+        window.location.replace(logoutUrl);
+      } else {
+        // Fallback to standard Auth0 logout
+        auth0Logout({
+          logoutParams: {
+            returnTo: returnTo
+          }
+        });
+      }
+    } catch (error) {
+      // Even if there's an error, ensure we clear local state
+      window.location.replace(isDevelopment ? 'http://localhost:3000/login' : 'https://exelaki-fe.onrender.com/login');
     }
   };
 
