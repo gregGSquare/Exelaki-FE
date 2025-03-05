@@ -43,30 +43,20 @@ api.interceptors.response.use(
     const processedError = handleApiError(error);
     
     // Handle authentication errors
-    if (processedError.type === 'AUTHENTICATION' || processedError.statusCode === 401) {
-      console.log('Auth error detected in axios interceptor', processedError);
-      
+    if ((processedError.type === 'AUTHENTICATION' || processedError.statusCode === 401)) {
       // Clear the invalid token
       localStorage.removeItem('accessToken');
-      sessionStorage.clear();
-      
-      // Only redirect to login if we're not already handling auth
+      sessionStorage.clear();      
+      // Only redirect to login if we haven't already triggered a logout
+      // and we're not already on the login or callback page
       if (!window._logoutTriggered && 
-          !window.location.pathname.startsWith('/login') && 
-          !window.location.pathname.startsWith('/callback')) {
-        
-        console.log('Triggering logout from axios interceptor');
+          !window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/callback')) {
+        // Set flag to prevent multiple redirects
         window._logoutTriggered = true;
         
-        // Determine the correct login URL based on environment
-        const loginUrl = process.env.NODE_ENV === 'development'
-          ? 'http://localhost:3000/login'
-          : 'https://exelaki-fe.onrender.com/login';
-          
-        console.log('Redirecting to:', loginUrl);
-        window.location.replace(loginUrl);
-      } else {
-        console.log('Not redirecting - already handling auth or on auth page');
+        // Redirect to login
+        window.location.href = '/login';
       }
     }
     

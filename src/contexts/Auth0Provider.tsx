@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
 
 interface Auth0ProviderWithConfigProps {
@@ -15,8 +15,11 @@ export const Auth0ProviderWithConfig: React.FC<Auth0ProviderWithConfigProps> = (
   // Use development redirect URI in development mode, production URI otherwise
   const isDevelopment = process.env.NODE_ENV === 'development';
   const redirectUri = isDevelopment 
-    ? (process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV)
-    : (process.env.REACT_APP_AUTH0_REDIRECT_URI);
+    ? (process.env.REACT_APP_AUTH0_REDIRECT_URI_DEV || 'http://localhost:3000/callback')
+    : (process.env.REACT_APP_AUTH0_REDIRECT_URI || 'https://exelaki-fe.onrender.com/callback');
+
+  // Check if we're on the callback page
+  const isCallback = window.location.pathname === '/callback';
 
   return (
     <Auth0Provider
@@ -30,6 +33,16 @@ export const Auth0ProviderWithConfig: React.FC<Auth0ProviderWithConfigProps> = (
       }}
       useRefreshTokens={false}
       cacheLocation="memory"
+      skipRedirectCallback={!isCallback}
+      onRedirectCallback={(appState) => {
+        try {
+          // Navigate to the intended route after callback processing
+          if (appState?.returnTo) {
+            window.history.replaceState({}, document.title, appState.returnTo);
+          }
+        } catch (error) {
+        }
+      }}
     >
       {children}
     </Auth0Provider>

@@ -150,25 +150,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ? 'http://localhost:3000'
       : 'https://exelaki-fe.onrender.com';
     
-    // Force a complete logout by directly navigating to Auth0's logout endpoint
-    try {
-      if (domain && clientId) {
-        // Construct a complete logout URL that will clear all Auth0 sessions
-        const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(returnTo)}`;
-              
-        // Force a complete page reload and navigation to the logout URL
-        window.location.replace(logoutUrl);
-      } else {
-        // Fallback to standard Auth0 logout
-        auth0Logout({
-          logoutParams: {
-            returnTo: returnTo
-          }
-        });
-      }
-    } catch (error) {
-      // Even if there's an error, ensure we clear local state
-      window.location.replace(isDevelopment ? 'http://localhost:3000/login' : 'https://exelaki-fe.onrender.com/login');
+    
+    // IMPORTANT: Skip the Auth0 SDK logout method and go directly to the Auth0 logout endpoint
+    // This prevents the issue where the first logout redirects to the callback URL
+    if (domain && clientId) {
+      // Construct a complete logout URL that will clear all Auth0 sessions
+      const logoutUrl = `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${encodeURIComponent(returnTo)}`;
+      
+      // Force a complete page reload and navigation to the logout URL
+      window.location.replace(logoutUrl);
+    } else {
+      // Fallback to standard Auth0 logout if domain or clientId is missing
+      auth0Logout({
+        logoutParams: {
+          returnTo: returnTo
+        }
+      });
     }
   };
 
