@@ -36,6 +36,7 @@ const Dashboard: React.FC = () => {
     savingsRate: { value: "N/A", status: "GOOD" },
     carCostRatio: { value: "N/A", status: "GOOD" },
     homeCostRatio: { value: "N/A", status: "GOOD" },
+    fixedExpenses: { value: "N/A", status: "GOOD" },
     expenseDistribution: [] as ExpenseDistribution[]
   });
   const {
@@ -344,115 +345,35 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Dashboard Layout */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Column - Overview and Tables */}
-          <div className="w-full lg:w-1/3 space-y-6">
-            {/* Financial Status Overview */}
-            <div className="bg-white/80 backdrop-blur-sm shadow-soft rounded-xl px-6 py-6 border border-neutral-100 relative z-10 transition-all hover:shadow-card">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-neutral-800 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Financial Status
-                </h2>
-                <button
-                  className="text-neutral-400 hover:text-primary-600 p-1 rounded-lg hover:bg-primary-50 transition-colors"
-                  title="View Details"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* Debt-to-Income */}
-                <div className="p-3 bg-neutral-50/50 rounded-lg border border-neutral-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-neutral-600">Debt-to-Income</span>
-                    <div className="flex items-center">
-                      {financialIndicators.debtToIncomeRatio.status === "GOOD" ? (
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-lg font-semibold text-neutral-800">
-                    {financialIndicators.debtToIncomeRatio.value}
-                  </p>
-                </div>
-
-                {/* Savings Rate */}
-                <div className="p-3 bg-neutral-50/50 rounded-lg border border-neutral-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-neutral-600">Savings Rate</span>
-                    <div className="flex items-center">
-                      {financialIndicators.savingsRate.status === "GOOD" ? (
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-lg font-semibold text-neutral-800">
-                    {financialIndicators.savingsRate.value}
-                  </p>
-                </div>
-
-                {/* Car Cost Ratio */}
-                <div className="p-3 bg-neutral-50/50 rounded-lg border border-neutral-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-neutral-600">Car Cost</span>
-                    <div className="flex items-center">
-                      {financialIndicators.carCostRatio.status === "GOOD" ? (
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-lg font-semibold text-neutral-800">
-                    {financialIndicators.carCostRatio.value}
-                  </p>
-                </div>
-
-                {/* Home Cost Ratio */}
-                <div className="p-3 bg-neutral-50/50 rounded-lg border border-neutral-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-neutral-600">Home Cost</span>
-                    <div className="flex items-center">
-                      {financialIndicators.homeCostRatio.status === "GOOD" ? (
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-lg font-semibold text-neutral-800">
-                    {financialIndicators.homeCostRatio.value}
-                  </p>
-                </div>
-              </div>
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+        {/* Financial Status Overview - Full Width */}
+        <div className="mb-6">
+          <div className="bg-white/80 backdrop-blur-sm shadow-soft rounded-xl px-3 sm:px-4 py-4 border border-neutral-100 relative z-10 transition-all hover:shadow-card">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-neutral-800 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Financial Status
+              </h2>
+              <button
+                className="text-neutral-400 hover:text-primary-600 p-1 rounded-lg hover:bg-primary-50 transition-colors"
+                title="View Details"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
             </div>
+            
+            {/* Use the FinancialIndicatorCards component */}
+            <FinancialIndicatorCards indicators={financialIndicators} />
+          </div>
+        </div>
 
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+          {/* Left Column - Overview and Tables */}
+          <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6">
             {/* Income Overview */}
             <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-soft border border-neutral-100 p-5 transition-all hover:shadow-card">
               <div className="flex justify-between items-center mb-3">

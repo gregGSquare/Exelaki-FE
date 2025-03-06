@@ -3,6 +3,7 @@ import React from 'react';
 interface FinancialIndicator {
   value: string;
   status: string;
+  amount?: string;
 }
 
 interface FinancialIndicators {
@@ -11,6 +12,7 @@ interface FinancialIndicators {
   savingsRate: FinancialIndicator;
   carCostRatio: FinancialIndicator;
   homeCostRatio: FinancialIndicator;
+  fixedExpenses?: FinancialIndicator;
 }
 
 interface Props {
@@ -25,7 +27,8 @@ const FinancialIndicatorBars: React.FC<Props> = ({ indicators }) => {
       case 'ACCEPTABLE':
       case 'OK': return 'bg-yellow-500';
       case 'NEEDS_IMPROVEMENT':
-      case 'BAD': return 'bg-red-500';
+      case 'BAD':
+      case 'CRITICAL': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
@@ -42,6 +45,8 @@ const FinancialIndicatorBars: React.FC<Props> = ({ indicators }) => {
         return 100 - ((value / 35) * 100); // Inverse, max considered 35%
       case 'Home Cost Ratio':
         return 100 - ((value / 35) * 100); // Inverse, max considered 35%
+      case 'Fixed Expenses':
+        return 100 - ((value / 50) * 100); // Inverse, max considered 50%
       default:
         return value;
     }
@@ -54,6 +59,11 @@ const FinancialIndicatorBars: React.FC<Props> = ({ indicators }) => {
     { name: 'Car Cost Ratio', ...indicators.carCostRatio },
     { name: 'Home Cost Ratio', ...indicators.homeCostRatio },
   ];
+
+  // Add fixedExpenses to the array if it exists
+  if (indicators.fixedExpenses) {
+    indicators_array.push({ name: 'Fixed Expenses', ...indicators.fixedExpenses });
+  }
 
   return (
     <div className="space-y-4">

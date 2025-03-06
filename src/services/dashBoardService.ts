@@ -69,6 +69,7 @@ export const fetchFinancialIndicators = async (budgetId: string) => {
       savingsRate: { value: "N/A", status: "GOOD" },
       carCostRatio: { value: "N/A", status: "GOOD" },
       homeCostRatio: { value: "N/A", status: "GOOD" },
+      fixedExpenses: { value: "N/A", status: "GOOD" },
       expenseDistribution: []
     };
   }
@@ -101,6 +102,7 @@ export const fetchFinancialIndicators = async (budgetId: string) => {
       savingsRate: { value: "N/A", status: "GOOD" },
       carCostRatio: { value: "N/A", status: "GOOD" },
       homeCostRatio: { value: "N/A", status: "GOOD" },
+      fixedExpenses: { value: "N/A", status: "GOOD" },
       expenseDistribution: []
     };
   }

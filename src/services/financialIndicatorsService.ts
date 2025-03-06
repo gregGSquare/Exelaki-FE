@@ -7,6 +7,7 @@ import { ExpenseDistribution } from "../types/entryTypes";
 interface FinancialIndicator {
   value: string;
   status: string;
+  amount?: string;
 }
 
 interface FinancialIndicators {
@@ -15,6 +16,7 @@ interface FinancialIndicators {
   savingsRate: FinancialIndicator;
   carCostRatio: FinancialIndicator;
   homeCostRatio: FinancialIndicator;
+  fixedExpenses: FinancialIndicator;
   expenseDistribution: ExpenseDistribution[];
 }
 
@@ -27,6 +29,7 @@ export const loadFinancialIndicators = async (budgetId: string, retryCount = 0, 
       savingsRate: { value: "N/A", status: "GOOD" },
       carCostRatio: { value: "N/A", status: "GOOD" },
       homeCostRatio: { value: "N/A", status: "GOOD" },
+      fixedExpenses: { value: "N/A", status: "GOOD" },
       expenseDistribution: []
     };
   }
