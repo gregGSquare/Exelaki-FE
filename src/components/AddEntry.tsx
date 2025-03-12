@@ -42,6 +42,8 @@ const AddEntry: React.FC<AddEntryProps> = ({
   const [recurrence, setRecurrence] = useState<EntryRecurrence>("MONTHLY");
   const [tags, setTags] = useState<EntryTags[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   // Reset form when modal is opened or closed
   useEffect(() => {
@@ -109,6 +111,7 @@ const AddEntry: React.FC<AddEntryProps> = ({
     setRecurrence("MONTHLY");
     setTags([]);
     setError(null);
+    setAttemptedSubmit(false);
   };
 
   const handleTagToggle = (tag: EntryTags) => {
@@ -121,6 +124,9 @@ const AddEntry: React.FC<AddEntryProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Set attempted submit to true to show validation errors
+    setAttemptedSubmit(true);
     
     // Validate required fields
     if (!name || !amount) {
@@ -140,6 +146,15 @@ const AddEntry: React.FC<AddEntryProps> = ({
       return;
     }
 
+    // For expenses, validate that at least one tag is selected
+    if (selectedType === "EXPENSE" && tags.length === 0) {
+      setError("Please select at least one tag for the expense");
+      return;
+    }
+
+    // Set loading state to true
+    setIsLoading(true);
+
     try {
       let categoryId = selectedCategoryId;
       
@@ -154,6 +169,7 @@ const AddEntry: React.FC<AddEntryProps> = ({
       // For EXPENSE, require category selection
       if (selectedType === 'EXPENSE' && !categoryId && !customCategoryMode) {
         setError("Category is required for expenses");
+        setIsLoading(false);
         return;
       }
 
@@ -181,9 +197,17 @@ const AddEntry: React.FC<AddEntryProps> = ({
           }
         }
         
-        // Call the onAdd function to handle the edit submission
-        await onAdd();
-        onClose();
+        try {
+          // First close the modal to prevent any interference
+          onClose();
+          // Then call onAdd to update data
+          await onAdd();
+        } catch (error) {
+          console.error("Error during onAdd after edit:", error);
+          // We've already closed the modal, so just log the error
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         // For new entries, make the API call directly
         const payload = {
@@ -202,12 +226,22 @@ const AddEntry: React.FC<AddEntryProps> = ({
         
         if (response.status === 201 || response.status === 200) {
           resetForm();
-          await onAdd();
-          onClose();
+          try {
+            // First close the modal to prevent any interference
+            onClose();
+            // Then call onAdd to update data
+            await onAdd();
+          } catch (error) {
+            console.error("Error during onAdd after create:", error);
+            // We've already closed the modal, so just log the error
+          } finally {
+            setIsLoading(false);
+          }
         }
       }
     } catch (error: any) {
       setError(error.response?.data?.message || "Failed to create entry");
+      setIsLoading(false);
     }
   };
 
@@ -233,12 +267,12 @@ const AddEntry: React.FC<AddEntryProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Type
+              Type <span className="text-gray-700">*</span>
             </label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as CategoryType)}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-3 py-2 border ${attemptedSubmit && !selectedType ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 disableTypeSelection ? 'bg-gray-100 text-gray-500 appearance-none cursor-not-allowed' : ''
               }`}
               required
@@ -249,34 +283,43 @@ const AddEntry: React.FC<AddEntryProps> = ({
               <option value="EXPENSE">Expense</option>
               <option value="SAVING">Saving</option>
             </select>
+            {attemptedSubmit && !selectedType && (
+              <p className="mt-1 text-sm text-red-600">Please select a type</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              Name <span className="text-gray-700">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border ${attemptedSubmit && !name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
               placeholder="Entry name"
               required
             />
+            {attemptedSubmit && !name && (
+              <p className="mt-1 text-sm text-red-600">Please enter a name</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Amount
+              Amount <span className="text-gray-700">*</span>
             </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className={`w-full px-3 py-2 border ${attemptedSubmit && !amount ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
               placeholder="0.00"
               required
             />
+            {attemptedSubmit && !amount && (
+              <p className="mt-1 text-sm text-red-600">Please enter an amount</p>
+            )}
           </div>
 
           <div>
@@ -284,7 +327,7 @@ const AddEntry: React.FC<AddEntryProps> = ({
               <>
                 <div className="flex justify-between items-center mb-1">
                   <label className="block text-sm font-medium text-gray-700">
-                    Category
+                    Category <span className="text-gray-700">*</span>
                   </label>
                   {!disableCategorySelection && (
                     <button
@@ -302,7 +345,7 @@ const AddEntry: React.FC<AddEntryProps> = ({
                     type="text"
                     value={customCategoryName}
                     onChange={(e) => setCustomCategoryName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border ${attemptedSubmit && !customCategoryName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     placeholder="New category name"
                     required
                   />
@@ -310,7 +353,7 @@ const AddEntry: React.FC<AddEntryProps> = ({
                   <select
                     value={selectedCategoryId}
                     onChange={(e) => setSelectedCategoryId(e.target.value)}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border ${attemptedSubmit && !selectedCategoryId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       disableCategorySelection ? 'bg-gray-100 text-gray-500 appearance-none cursor-not-allowed' : ''
                     }`}
                     required
@@ -325,6 +368,12 @@ const AddEntry: React.FC<AddEntryProps> = ({
                         </option>
                       ))}
                   </select>
+                )}
+                {attemptedSubmit && !selectedCategoryId && !customCategoryMode && (
+                  <p className="mt-1 text-sm text-red-600">Please select a category</p>
+                )}
+                {attemptedSubmit && customCategoryMode && !customCategoryName && (
+                  <p className="mt-1 text-sm text-red-600">Please enter a category name</p>
                 )}
               </>
             )}
@@ -384,9 +433,9 @@ const AddEntry: React.FC<AddEntryProps> = ({
           {selectedType === 'EXPENSE' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tags
+                Tags <span className="text-gray-700">*</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className={`flex flex-wrap gap-2 ${attemptedSubmit && tags.length === 0 ? 'border border-red-500 p-2 rounded-md' : ''}`}>
                 {Object.values(EntryTags).map((tag) => (
                   <button
                     key={tag}
@@ -402,6 +451,9 @@ const AddEntry: React.FC<AddEntryProps> = ({
                   </button>
                 ))}
               </div>
+              {attemptedSubmit && selectedType === 'EXPENSE' && tags.length === 0 && (
+                <p className="mt-1 text-sm text-red-600">Please select at least one tag</p>
+              )}
             </div>
           )}
 
@@ -410,14 +462,26 @@ const AddEntry: React.FC<AddEntryProps> = ({
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none"
+              disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 flex items-center justify-center min-w-[100px]"
+              disabled={isLoading}
             >
-              {editEntry ? 'Save Changes' : 'Add Entry'}
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                editEntry ? 'Save Changes' : 'Add Entry'
+              )}
             </button>
           </div>
         </form>
