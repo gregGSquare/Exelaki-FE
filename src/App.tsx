@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRoutes from './AppRoutes';
+import { ThemeProvider } from './ui-v2/state/ThemeContext';
 
 const App: React.FC = () => {
   return (
@@ -15,7 +16,9 @@ const App: React.FC = () => {
           <BudgetProvider>
             <Router>
               <NotificationProvider>
-                <AppRoutes />
+                <ThemeProvider>
+                  <AppRoutes />
+                </ThemeProvider>
               </NotificationProvider>
             </Router>
           </BudgetProvider>

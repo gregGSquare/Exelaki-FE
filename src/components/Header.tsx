@@ -62,11 +62,11 @@ const Header: React.FC<HeaderProps> = ({ onSignUpClick, onHomeClick }) => {
               Home
             </Link>
             {isAuthenticated && (
-              <Link to="/" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-primary-600 rounded-md transition-colors">
-                Budgets
+              <Link to="/settings" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-primary-600 rounded-md transition-colors">
+                Settings
               </Link>
             )}
-            <Link to="/features" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-primary-600 rounded-md transition-colors">
+            <Link to="/features" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-primary-600 rounded-md transition-colors hidden">
               Features
             </Link>
           </nav>

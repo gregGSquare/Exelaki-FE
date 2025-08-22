@@ -4,12 +4,14 @@ import { useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
+import DashboardV2 from './ui-v2/dashboard/DashboardV2';
+import DataSetup from './ui-v2/setup/DataSetup';
+import Projections from './ui-v2/projections/Projections';
 import WelcomePage from './pages/WelcomePage';
-import HeaderWithNavigate from './components/Header';
-import Footer from './components/Footer';
 import api from './services/axios';
 import { Budget } from './types/budget';
 import Callback from './pages/Callback';
+import Settings from './ui-v2/pages/Settings';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -83,27 +85,10 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-secondary-50 opacity-70 -z-10"></div>
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary-100/20 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-secondary-100/20 to-transparent"></div>
-        <svg className="absolute top-0 left-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 0 10 L 40 10 M 10 0 L 10 40" stroke="currentColor" strokeWidth="0.5" fill="none" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid-pattern)" />
-        </svg>
-      </div>
-      
-      <HeaderWithNavigate />
-      
-      <main className="pt-16 flex-grow">
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-grow">
         {budgetsError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mx-4 mt-4 mb-4 shadow-sm" role="alert">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg m-4 shadow-sm" role="alert">
             <div className="flex">
               <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -112,17 +97,17 @@ const AppRoutes: React.FC = () => {
             </div>
           </div>
         )}
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Routes>
+
+        <Routes>
             <Route
               path="/"
               element={
                 isAuthenticated ? (
-                  <WelcomePage
-                    budgets={budgets}
-                    setBudgets={setBudgets}
-                  />
+                  budgets.length > 0 ? (
+                    <Navigate to={`/app/${budgets[0]._id}`} replace />
+                  ) : (
+                    <Navigate to="/settings" replace />
+                  )
                 ) : (
                   <Navigate to="/login" replace />
                 )
@@ -133,17 +118,30 @@ const AppRoutes: React.FC = () => {
             <Route path="/callback" element={<Callback />} />
             <Route
               path="/dashboard/:id"
-              element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+              element={isAuthenticated ? <DashboardV2 /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/app/:id"
+              element={isAuthenticated ? <DashboardV2 /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/app/:id/setup"
+              element={isAuthenticated ? <DataSetup /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/app/:id/projections"
+              element={isAuthenticated ? <Projections /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/settings"
+              element={isAuthenticated ? <Settings /> : <Navigate to="/login" replace />}
             />
             <Route
               path="*"
               element={<Navigate to="/" replace />}
             />
           </Routes>
-        </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
