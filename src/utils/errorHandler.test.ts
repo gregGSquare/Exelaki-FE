@@ -22,8 +22,18 @@ describe('errorHandler', () => {
   });
 
   test('handles authentication errors with message', () => {
-    const response = { status: 401, data: { message: 'Unauthorized' }, statusText: '', headers: {}, config: {} };
-    const error = new AxiosError('auth', 'ERR_BAD_REQUEST', {}, {}, response);
+    // Provide minimal config objects to satisfy Axios type requirements
+    const response = {
+      status: 401,
+      data: { message: 'Unauthorized' },
+      statusText: '',
+      headers: {},
+      // The AxiosResponse type expects a config with headers
+      config: { headers: {} }
+    } as any;
+
+    // Pass undefined for config/request and cast response to avoid TS complaints
+    const error = new AxiosError('auth', 'ERR_BAD_REQUEST', undefined, undefined, response);
     const result = handleApiError(error);
     expect(result.type).toBe(ErrorType.AUTHENTICATION);
     expect(result.message).toBe('Unauthorized');
