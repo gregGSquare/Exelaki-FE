@@ -7,6 +7,7 @@ import { useEntriesData } from "./useEntriesData";
 import MainChart from "./widgets/MainChart";
 import KpiCards from "./widgets/KpiCards";
 import CategoryTable from "./widgets/CategoryTable";
+import FinancialIndicators from "./widgets/FinancialIndicators";
 
 const Card: React.FC<{ title: string; children?: React.ReactNode; actions?: React.ReactNode }> = ({ title, children, actions }) => (
   <div className="h-full w-full bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden dark:bg-neutral-900/80 dark:border-neutral-800">
@@ -30,16 +31,19 @@ const defaultLayouts: Layouts = {
     { i: "main", x: 0, y: 0, w: 12, h: 8 },
     { i: "kpi", x: 0, y: 8, w: 6, h: 6 },
     { i: "table", x: 6, y: 8, w: 6, h: 6 },
+    { i: "indicators", x: 0, y: 14, w: 12, h: 8 },
   ],
   md: [
     { i: "main", x: 0, y: 0, w: 10, h: 8 },
     { i: "kpi", x: 0, y: 8, w: 5, h: 6 },
     { i: "table", x: 5, y: 8, w: 5, h: 6 },
+    { i: "indicators", x: 0, y: 14, w: 10, h: 8 },
   ],
   sm: [
     { i: "main", x: 0, y: 0, w: 1, h: 8 },
     { i: "kpi", x: 0, y: 8, w: 1, h: 6 },
     { i: "table", x: 0, y: 14, w: 1, h: 6 },
+    { i: "indicators", x: 0, y: 20, w: 1, h: 8 },
   ],
 };
 
@@ -112,6 +116,11 @@ const WidgetGrid: React.FC = () => {
           ) : (
             <CategoryTable rows={expensesByCategory} />
           )}
+        </Card>
+      </div>
+      <div key="indicators" className="h-full">
+        <Card title="Financial Indicators" actions={<span className="drag-handle cursor-move px-2 py-1 text-xs text-neutral-400">drag</span>}>
+          <FinancialIndicators />
         </Card>
       </div>
     </ResponsiveGrid>
