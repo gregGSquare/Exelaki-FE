@@ -27,12 +27,7 @@ const Login: React.FC = () => {
     }
   }, [auth0Error, backendError, showNotification]);
 
-  // Automatically redirect to Auth0 login when the component mounts
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      login({ screen_hint: 'login' });
-    }
-  }, [isAuthenticated, isLoading, login]);
+  // Stop auto-redirect to Auth0; show a login button instead
 
   // Show loading state while redirecting
   return (
@@ -53,9 +48,16 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-sm text-gray-600">Redirecting to login...</p>
+        <div className="mt-8 text-center space-y-4">
+          <button
+            className="w-full px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => login({ screen_hint: 'login' })}
+          >
+            Continue with Auth0
+          </button>
+          {backendError && (
+            <p className="text-sm text-red-600">{backendError}</p>
+          )}
         </div>
       </div>
     </div>

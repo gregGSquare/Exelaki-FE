@@ -8,6 +8,7 @@ import DataSetup from './ui-v2/setup/DataSetup';
 import Projections from './ui-v2/projections/Projections';
 import Callback from './pages/Callback';
 import Settings from './ui-v2/pages/Settings';
+import SignedOut from './pages/SignedOut';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,7 @@ const AppRoutes: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/callback" element={<Callback />} />
+            <Route path="/signed-out" element={<SignedOut />} />
             <Route
               path="/app/:id"
               element={isAuthenticated ? <DashboardV2 /> : <Navigate to="/login" replace />}

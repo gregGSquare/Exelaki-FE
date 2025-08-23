@@ -147,8 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Determine the correct returnTo URL based on environment
     const isDevelopment = process.env.NODE_ENV === 'development';
     const returnTo = isDevelopment 
-      ? 'http://localhost:3000'
-      : 'https://exelaki-fe.onrender.com';
+      ? 'http://localhost:3000/signed-out'
+      : 'https://exelaki-fe.onrender.com/signed-out';
     
     
     // IMPORTANT: Skip the Auth0 SDK logout method and go directly to the Auth0 logout endpoint

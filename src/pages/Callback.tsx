@@ -9,7 +9,7 @@ const Callback: React.FC = () => {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        navigate('/', { replace: true });
+        navigate('/app/mock', { replace: true });
       } else {
         navigate('/login', { replace: true });
       }
