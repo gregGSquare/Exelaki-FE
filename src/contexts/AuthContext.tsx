@@ -116,6 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         scope: 'openid profile email',
         audience: process.env.REACT_APP_AUTH0_AUDIENCE || 'https://api.exelaki.com',
         screen_hint: options?.screen_hint,
+        // Force showing Universal Login even if there is an active SSO session
+        prompt: 'login',
       },
       appState: {
         returnTo: '/'

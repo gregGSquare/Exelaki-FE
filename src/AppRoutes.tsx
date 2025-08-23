@@ -9,6 +9,7 @@ import Projections from './ui-v2/projections/Projections';
 import Callback from './pages/Callback';
 import Settings from './ui-v2/pages/Settings';
 import SignedOut from './pages/SignedOut';
+import Landing from './pages/Landing';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,16 +32,7 @@ const AppRoutes: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow">
         <Routes>
-            <Route
-              path="/"
-              element={
-                isAuthenticated ? (
-                  <Navigate to="/app/mock" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/callback" element={<Callback />} />
