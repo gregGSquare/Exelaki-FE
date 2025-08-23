@@ -1,3 +1,4 @@
+// Unit tests for financial indicators service
 import { loadFinancialIndicators } from './financialIndicatorsService';
 import { fetchFinancialIndicators } from './dashBoardService';
 import { handleApiError } from '../utils/errorHandler';

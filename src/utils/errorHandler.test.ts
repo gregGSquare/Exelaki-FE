@@ -1,3 +1,4 @@
+// Unit tests for errorHandler utilities
 jest.mock('axios', () => {
   class AxiosError extends Error {
     code?: string;

@@ -1,3 +1,4 @@
+// Unit tests for dashboard service functions
 import { fetchCategories, fetchEntries, deleteEntry, editEntry, fetchFinancialIndicators, deleteCategory } from './dashBoardService';
 import api from './axios';
 import { handleApiError } from '../utils/errorHandler';

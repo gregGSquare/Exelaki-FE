@@ -1,3 +1,4 @@
+// Unit tests for currency utility functions
 import { getCurrencyList, formatCurrency, getCurrencySymbol, calculatePercentage } from './currency';
 
 describe('currency utilities', () => {
