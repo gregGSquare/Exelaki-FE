@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import AppShell from "../layout/AppShell";
 import { LayoutProvider } from "../state/LayoutContext";
 import { useParams } from "react-router-dom";
-import { fetchEntries } from "../../services/dashBoardService";
-import api from "../../services/axios";
+import { mockRepository } from "../testing/mock-backend/repository";
 import { Entry } from "../../types/entryTypes";
+import { usePreferences } from "../state/PreferencesContext";
+import { formatCurrency } from "../../utils/currency";
 
 interface ScenarioView {
   _id: string;
@@ -20,10 +21,11 @@ const Projections: React.FC = () => {
   const [scenarios, setScenarios] = useState<ScenarioView[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const { currencyCode } = usePreferences();
 
   useEffect(() => {
     const init = async () => {
-      const ents = await fetchEntries(budgetId);
+      const ents = await mockRepository.entries.list(budgetId);
       setEntries(ents);
       // Temporary: use backend when available; for now keep empty scenario list until API exists
       const sc: any[] = [];
@@ -66,15 +68,15 @@ const Projections: React.FC = () => {
           <div className="grid grid-cols-3 gap-3 text-sm">
             <div className="rounded bg-neutral-50 border border-neutral-200 p-3 dark:bg-neutral-800/80 dark:border-neutral-700">
               <div className="text-neutral-500 dark:text-neutral-400">Income</div>
-              <div className="text-xl font-semibold">{totalIncome.toFixed(2)}</div>
+              <div className="text-xl font-semibold">{formatCurrency(totalIncome, currencyCode)}</div>
             </div>
             <div className="rounded bg-neutral-50 border border-neutral-200 p-3 dark:bg-neutral-800/80 dark:border-neutral-700">
               <div className="text-neutral-500 dark:text-neutral-400">Expenses</div>
-              <div className="text-xl font-semibold">{totalExpenses.toFixed(2)}</div>
+              <div className="text-xl font-semibold">{formatCurrency(totalExpenses, currencyCode)}</div>
             </div>
             <div className="rounded bg-neutral-50 border border-neutral-200 p-3 dark:bg-neutral-800/80 dark:border-neutral-700">
               <div className="text-neutral-500 dark:text-neutral-400">Balance</div>
-              <div className={`text-xl font-semibold ${balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{balance.toFixed(2)}</div>
+              <div className={`text-xl font-semibold ${balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{formatCurrency(balance, currencyCode)}</div>
             </div>
           </div>
           <div className="mt-4">
@@ -92,7 +94,7 @@ const Projections: React.FC = () => {
                   <tr key={e._id} className="border-b border-neutral-100 dark:border-neutral-900">
                     <td className="py-2">{e.name}</td>
                     <td className="text-neutral-400">{e.type}</td>
-                    <td className="text-right">{e.amount}</td>
+                    <td className="text-right">{formatCurrency(Number(e.amount), currencyCode)}</td>
                     <td className="text-right">
                       {active ? (
                         <input type="number" className="w-28 bg-white border border-neutral-300 rounded p-1 text-sm text-right dark:bg-neutral-800 dark:border-neutral-700" value={active.overrides[e._id] ?? e.amount} onChange={(ev) => setOverride(e._id, parseFloat(ev.target.value || '0'))} />

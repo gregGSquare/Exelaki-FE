@@ -1,4 +1,6 @@
 import React from "react";
+import { formatCurrency } from "../../../utils/currency";
+import { usePreferences } from "../../state/PreferencesContext";
 
 interface Row {
   id: string;
@@ -7,6 +9,7 @@ interface Row {
 }
 
 const CategoryTable: React.FC<{ rows: Row[] }> = ({ rows }) => {
+  const { currencyCode } = usePreferences();
   return (
     <div className="h-full overflow-auto">
       <table className="w-full text-sm">
@@ -20,7 +23,7 @@ const CategoryTable: React.FC<{ rows: Row[] }> = ({ rows }) => {
           {rows.map(r => (
             <tr key={r.id} className="border-b border-neutral-100 dark:border-neutral-900">
               <td className="py-2">{r.name}</td>
-              <td className="text-right">{r.total.toFixed(2)}</td>
+              <td className="text-right">{formatCurrency(r.total, currencyCode)}</td>
             </tr>
           ))}
         </tbody>

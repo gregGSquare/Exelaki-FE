@@ -36,6 +36,71 @@ const db = {
     ];
     db.categories = defaults.map((d) => ({ _id: randomId(), name: d.name, type: d.type, user: null, defaultCategory: d.defaultCategory }));
   }
+  // Seed sample entries for demo budget
+  if (db.entries.length === 0) {
+    const demoBudgetId = 'mock';
+    const incomeCat = db.categories.find(c => c.type === 'INCOME');
+    const savingCat = db.categories.find(c => c.type === 'SAVING');
+    const groceries = db.categories.find(c => c.name === 'Groceries');
+    const rent = db.categories.find(c => c.name === 'Rent');
+    if (incomeCat) {
+      db.entries.push({
+        _id: randomId(),
+        name: 'Salary',
+        amount: 3200,
+        categoryId: incomeCat._id,
+        budgetId: demoBudgetId,
+        flexibility: 'FIXED',
+        recurrence: 'MONTHLY',
+        tags: [EntryTags.MISC],
+        category: incomeCat,
+        type: 'INCOME',
+      } as Entry);
+    }
+    if (savingCat) {
+      db.entries.push({
+        _id: randomId(),
+        name: 'Emergency fund',
+        amount: 300,
+        categoryId: savingCat._id,
+        budgetId: demoBudgetId,
+        flexibility: 'FIXED',
+        recurrence: 'MONTHLY',
+        tags: [EntryTags.MISC],
+        category: savingCat,
+        type: 'SAVING',
+      } as Entry);
+    }
+    if (rent) {
+      db.entries.push({
+        _id: randomId(),
+        name: 'Rent',
+        amount: 1200,
+        categoryId: rent._id,
+        budgetId: demoBudgetId,
+        dueDayOfMonth: 1,
+        flexibility: 'FIXED',
+        recurrence: 'MONTHLY',
+        tags: [EntryTags.HOUSING],
+        category: rent,
+        type: 'EXPENSE',
+      } as Entry);
+    }
+    if (groceries) {
+      db.entries.push({
+        _id: randomId(),
+        name: 'Groceries',
+        amount: 400,
+        categoryId: groceries._id,
+        budgetId: demoBudgetId,
+        flexibility: 'FLEXIBLE',
+        recurrence: 'MONTHLY',
+        tags: [EntryTags.FOOD],
+        category: groceries,
+        type: 'EXPENSE',
+      } as Entry);
+    }
+  }
 })();
 
 // Repository API — mirrors likely backend endpoints

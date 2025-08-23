@@ -4,27 +4,33 @@ import { BudgetProvider } from "./contexts/BudgetContext";
 import { Auth0ProviderWithConfig } from './contexts/Auth0Provider';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import ErrorBoundary from './components/ErrorBoundary';
+import { ErrorProviderV2 } from './ui-v2/error-v2/ErrorProvider';
+import { ErrorBoundaryV2 } from './ui-v2/error-v2/ErrorBoundaryV2';
 import AppRoutes from './AppRoutes';
 import { ThemeProvider } from './ui-v2/state/ThemeContext';
+import { PreferencesProvider } from './ui-v2/state/PreferencesContext';
 
 const App: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <Auth0ProviderWithConfig>
-        <AuthProvider>
-          <BudgetProvider>
-            <Router>
-              <NotificationProvider>
-                <ThemeProvider>
-                  <AppRoutes />
-                </ThemeProvider>
-              </NotificationProvider>
-            </Router>
-          </BudgetProvider>
-        </AuthProvider>
-      </Auth0ProviderWithConfig>
-    </ErrorBoundary>
+    <ErrorProviderV2>
+      <ErrorBoundaryV2>
+        <Auth0ProviderWithConfig>
+          <AuthProvider>
+            <BudgetProvider>
+              <Router>
+                <NotificationProvider>
+                  <ThemeProvider>
+                    <PreferencesProvider>
+                      <AppRoutes />
+                    </PreferencesProvider>
+                  </ThemeProvider>
+                </NotificationProvider>
+              </Router>
+            </BudgetProvider>
+          </AuthProvider>
+        </Auth0ProviderWithConfig>
+      </ErrorBoundaryV2>
+    </ErrorProviderV2>
   );
 };
 

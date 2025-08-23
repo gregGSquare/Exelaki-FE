@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useMemo } from "react";
 import AppShell from "../layout/AppShell";
 import { LayoutProvider } from "../state/LayoutContext";
 import { useTheme } from "../state/ThemeContext";
 import Switch from "../components/Switch";
 import { useAuth } from "../../contexts/AuthContext";
+import { usePreferences } from "../state/PreferencesContext";
+import { getCurrencyList } from "../../utils/currency";
+import CurrencyPicker from "../components/CurrencyPicker";
 
 const Settings: React.FC = () => {
   const { theme, toggle, set } = useTheme();
   const { user, auth0User } = useAuth();
+  const { currencyCode, setCurrencyCode } = usePreferences();
+  const currencies = useMemo(() => getCurrencyList(), []);
 
   return (
     <LayoutProvider>
@@ -38,7 +43,10 @@ const Settings: React.FC = () => {
         </div>
         <div className="bg-white border border-neutral-200 rounded-xl p-4 dark:bg-neutral-900/80 dark:border-neutral-800">
           <h2 className="text-lg font-semibold mb-3">Preferences</h2>
-          <div className="text-sm text-neutral-500 dark:text-neutral-400">Future settings like currency, locale, and notifications will appear here.</div>
+          <div className="space-y-2">
+            <label className="text-base font-medium" htmlFor="currency">Currency</label>
+            <CurrencyPicker value={currencyCode} onChange={setCurrencyCode} />
+          </div>
         </div>
       </div>
       </AppShell>

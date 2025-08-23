@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import ToastNotification, { ToastType } from '../components/ToastNotification';
+import ToastNotificationV2, { ToastType } from '../ui-v2/feedback-v2/ToastNotificationV2';
 
 interface Notification {
   id: string;
@@ -63,7 +63,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         }}
       >
         {notifications.map(notification => (
-          <ToastNotification
+          <ToastNotificationV2
             key={notification.id}
             message={notification.message}
             type={notification.type}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
@@ -7,12 +7,18 @@ interface AppShellProps {
 }
 
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
   return (
-    <div className="w-full h-screen bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100 flex">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+      {/* Off-canvas menu for mobile */}
+      <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+
+      {/* Static sidebar for desktop */}
+      <div className="md:pl-64">
+        <Topbar onOpenSidebar={() => setMobileOpen(true)} />
+        <main className="py-4 px-3 sm:px-6">
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Entry } from "../../../types/entryTypes";
+import { usePreferences } from "../../state/PreferencesContext";
+import { formatCurrency } from "../../../utils/currency";
 
 const buildSeries = (entries: Entry[]) => {
   const days = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -10,14 +12,15 @@ const buildSeries = (entries: Entry[]) => {
 
 const MainChart: React.FC<{ entries: Entry[] }> = ({ entries }) => {
   const data = buildSeries(entries);
+  const { currencyCode } = usePreferences();
   return (
     <div className="h-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, left: 0, right: 10, bottom: 10 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
           <XAxis dataKey="d" stroke="#aaa" tick={{ fontSize: 12 }} />
-          <YAxis stroke="#aaa" tick={{ fontSize: 12 }} />
-          <Tooltip contentStyle={{ background: '#0f0f10', border: '1px solid #2a2a2a', fontSize: 12 }} />
+          <YAxis stroke="#aaa" tick={{ fontSize: 12 }} tickFormatter={(v) => formatCurrency(Number(v), currencyCode)} />
+          <Tooltip contentStyle={{ background: '#0f0f10', border: '1px solid #2a2a2a', fontSize: 12 }} formatter={(value: any) => [formatCurrency(Number(value), currencyCode), 'Value']} />
           <Line type="monotone" dataKey="v" stroke="#60a5fa" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
