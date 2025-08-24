@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AppShell from "../layout/AppShell";
 import { LayoutProvider } from "../state/LayoutContext";
 import { Category, CategoryType } from "../../types/categoryTypes";
@@ -35,7 +35,8 @@ const emptyDraft: EntryDraft = {
   categoryId: "",
   flexibility: "FIXED",
   recurrence: "MONTHLY",
-  tags: [EntryTags.MISC],
+  // Start with no tags; we'll validate to require at least one for expenses
+  tags: [],
 };
 
 const DataSetup: React.FC = () => {
@@ -53,6 +54,16 @@ const DataSetup: React.FC = () => {
   const [multiRows, setMultiRows] = useState<Array<{ name: string; amount: string }>>([]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const { currencyCode } = usePreferences();
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState<boolean>(false);
+  const categoryMenuRef = useRef<HTMLDivElement | null>(null);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState<boolean>(false);
+  const [mobileAdvanced, setMobileAdvanced] = useState<boolean>(false);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void> | void;
+  } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -80,10 +91,22 @@ const DataSetup: React.FC = () => {
     }));
   }, [activeTab, typeCategories]);
 
+  // Close category dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!categoryMenuRef.current) return;
+      if (!categoryMenuRef.current.contains(e.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const validate = (): string | null => {
     if (!draft.name || !draft.amount) return "Name and amount are required";
     if (draft.type === "EXPENSE" && !draft.categoryId) return "Expense requires a category";
-    if (draft.type === "EXPENSE" && draft.tags.length === 0) return "Expense requires at least one tag";
+    if (draft.type === "EXPENSE" && draft.tags.length === 0) return "Select at least one tag";
     return null;
   };
 
@@ -160,19 +183,48 @@ const DataSetup: React.FC = () => {
     const selectedCat = categories.find(c => c._id === selectedId);
     if (!selectedCat) return;
     const related = entries.filter(e => e.category?._id === selectedId);
-    const ok = window.confirm(related.length > 0
-      ? `Delete category "${selectedCat.name}" and its ${related.length} entries?`
-      : `Delete category "${selectedCat.name}"?`);
-    if (!ok) return;
-    for (const e of related) {
-      await mockRepository.entries.remove(e._id);
-    }
-    await mockRepository.categories.remove(selectedId);
-    const cats = await mockRepository.categories.list();
-    setCategories(cats);
-    const ents = await mockRepository.entries.list(budgetId);
-    setEntries(ents);
-    setDraft(d => ({ ...d, categoryId: typeCategories[d.type][0]?._id || "" }));
+    setConfirmState({
+      open: true,
+      title: 'Delete category',
+      message: related.length > 0
+        ? `Delete category "${selectedCat.name}" and its ${related.length} entries?`
+        : `Delete category "${selectedCat.name}"?`,
+      onConfirm: async () => {
+        for (const e of related) {
+          await mockRepository.entries.remove(e._id);
+        }
+        await mockRepository.categories.remove(selectedId);
+        const cats = await mockRepository.categories.list();
+        setCategories(cats);
+        const ents = await mockRepository.entries.list(budgetId);
+        setEntries(ents);
+        setDraft(d => ({ ...d, categoryId: typeCategories[d.type][0]?._id || "" }));
+      }
+    });
+  };
+
+  const deleteCategory = async (id: string) => {
+    const selectedCat = categories.find(c => c._id === id);
+    if (!selectedCat) return;
+    const related = entries.filter(e => e.category?._id === id);
+    setConfirmState({
+      open: true,
+      title: 'Delete category',
+      message: related.length > 0
+        ? `Delete category "${selectedCat.name}" and its ${related.length} entries?`
+        : `Delete category "${selectedCat.name}"?`,
+      onConfirm: async () => {
+        for (const e of related) {
+          await mockRepository.entries.remove(e._id);
+        }
+        await mockRepository.categories.remove(id);
+        const cats = await mockRepository.categories.list();
+        setCategories(cats);
+        const ents = await mockRepository.entries.list(budgetId);
+        setEntries(ents);
+        setDraft(d => ({ ...d, categoryId: typeCategories[d.type][0]?._id || "" }));
+      }
+    });
   };
 
   const incomes = entries.filter(e => e.type === "INCOME");
@@ -212,9 +264,10 @@ const DataSetup: React.FC = () => {
             );
           })}
         </div>
+        {/* Desktop/tablet full form; hidden on small screens */}
         <Section title={`${activeTab.charAt(0)+activeTab.slice(1).toLowerCase()}s`}>
             {error && <div className="text-sm text-red-400 mb-2">{error}</div>}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="md:col-span-2 flex justify-end text-xs text-neutral-500">
                 <span>Tip: tap + to add more lines. Options apply to all lines.</span>
               </div>
@@ -222,28 +275,54 @@ const DataSetup: React.FC = () => {
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
                 <div className="col-span-12 md:col-span-7">
                   <label className="block text-xs mb-1">Category</label>
-                  <div className="flex gap-2">
-                    <select className="flex-1 bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.categoryId} onChange={(e) => setDraft(d => ({ ...d, categoryId: e.target.value }))}>
-                      {typeCategories[draft.type].map(c => (<option key={c._id} value={c._id}>{c.name}</option>))}
-                    </select>
-                    <button type="button" className="px-2 py-2 rounded border border-neutral-300 bg-white hover:bg-neutral-100 text-xs dark:bg-neutral-800 dark:border-neutral-700" onClick={() => setCustomCategoryMode(v => !v)}>{customCategoryMode ? 'Cancel' : 'New'}</button>
-                    <button type="button" className="px-2 py-2 rounded border border-red-300 bg-white text-red-600 hover:bg-red-50 text-xs" onClick={deleteSelectedCategory}>Delete</button>
-                  </div>
-                  {customCategoryMode && (
-                    <div className="mt-2 flex gap-2">
-                      <input className="flex-1 bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" placeholder="New category name" value={customCategoryName} onChange={e => setCustomCategoryName(e.target.value)} />
+                  {customCategoryMode ? (
+                    <div className="flex gap-2">
+                      <input className="flex-1 bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" placeholder="New category name" value={customCategoryName} onChange={e => setCustomCategoryName(e.target.value)} />
+                      <button type="button" className="px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-xs dark:bg-neutral-800 dark:border-neutral-700" onClick={() => setCustomCategoryMode(false)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2" ref={categoryMenuRef}>
+                      <div className="relative flex-1">
+                        <button
+                          type="button"
+                          className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm text-left flex items-center justify-between hover:bg-neutral-50 dark:bg-neutral-800 dark:border-neutral-700"
+                          onClick={() => setCategoryMenuOpen(v => !v)}
+                        >
+                          <span>{(typeCategories[draft.type].find(c => c._id === draft.categoryId)?.name) || 'Select category'}</span>
+                          <svg className="w-4 h-4 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        {categoryMenuOpen && (
+                          <div className="absolute z-50 mt-1 w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-1 max-h-56 overflow-auto">
+                            {typeCategories[draft.type].map(c => (
+                              <div key={c._id} className="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                                <button type="button" className="text-sm text-left flex-1" onClick={() => { setDraft(d => ({ ...d, categoryId: c._id })); setCategoryMenuOpen(false); }}>{c.name}</button>
+                                <button type="button" className="ml-2 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30" onClick={(e) => { e.stopPropagation(); deleteCategory(c._id); setCategoryMenuOpen(false); }} title="Delete category">
+                                  <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 002-2h2a2 2 0 002 2m-6 0h6"/></svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button type="button" className="px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-xs dark:bg-neutral-800 dark:border-neutral-700" onClick={() => { setCustomCategoryMode(true); setCategoryMenuOpen(false); }}>New</button>
                     </div>
                   )}
                 </div>
                 {draft.type === 'EXPENSE' && (
                   <div className="col-span-12 md:col-span-5">
                     <label className="block text-xs mb-1">Recurrence</label>
-                    <select className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.recurrence} onChange={(e) => setDraft(d => ({ ...d, recurrence: e.target.value as EntryRecurrence }))}>
-                      <option value="MONTHLY">Monthly</option>
-                      <option value="QUARTERLY">Quarterly</option>
-                      <option value="YEARLY">Yearly</option>
-                      <option value="ONE_TIME">One Time</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {(['MONTHLY','QUARTERLY','YEARLY','ONE_TIME'] as EntryRecurrence[]).map(r => (
+                        <button
+                          key={r}
+                          type="button"
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${draft.recurrence === r ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`}
+                          onClick={() => setDraft(d => ({ ...d, recurrence: r }))}
+                        >
+                          {r === 'ONE_TIME' ? 'One time' : r.charAt(0) + r.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -252,20 +331,41 @@ const DataSetup: React.FC = () => {
                 <>
                   <div className="col-span-1">
                     <label className="block text-xs mb-1">Flexibility</label>
-                    <select className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.flexibility} onChange={(e) => setDraft(d => ({ ...d, flexibility: e.target.value as EntryFlexibility }))}>
-                      <option value="FIXED">Fixed</option>
-                      <option value="FLEXIBLE">Flexible</option>
-                      <option value="OPTIONAL">Optional</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {(['FIXED','FLEXIBLE','OPTIONAL'] as EntryFlexibility[]).map(f => (
+                        <button
+                          key={f}
+                          type="button"
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${draft.flexibility === f ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`}
+                          onClick={() => setDraft(d => ({ ...d, flexibility: f }))}
+                        >
+                          {f.charAt(0) + f.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="hidden md:block"></div>
                   <div className="md:col-span-2">
                     <label className="block text-xs mb-1">Tags</label>
                     <div className="flex flex-wrap gap-2">
                       {Object.values(EntryTags).map(t => (
-                        <button key={t} type="button" className={`px-2 py-1 rounded-full text-xs border transition-colors ${draft.tags.includes(t) ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`} onClick={() => setDraft(d => ({ ...d, tags: d.tags.includes(t) ? d.tags.filter(x => x !== t) : [...d.tags, t] }))}>{t.toLowerCase()}</button>
+                        <button
+                          key={t}
+                          type="button"
+                          className={`px-2.5 py-1.5 rounded-full text-xs border transition-colors ${draft.tags.includes(t) ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`}
+                          onClick={() => setDraft(d => {
+                            const already = d.tags.includes(t);
+                            const next = already ? d.tags.filter(x => x !== t) : [...d.tags, t];
+                            return { ...d, tags: next };
+                          })}
+                        >
+                          {t.toLowerCase()}
+                        </button>
                       ))}
                     </div>
+                    {error && draft.type === 'EXPENSE' && draft.tags.length === 0 && (
+                      <div className="text-[11px] text-red-500 mt-1">At least one tag is required.</div>
+                    )}
                   </div>
                 </>
               )}
@@ -273,26 +373,26 @@ const DataSetup: React.FC = () => {
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
                 <div className="col-span-12 md:col-span-6">
                   <label className="block text-xs mb-1">Name</label>
-                  <input className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.name} onChange={(e) => setDraft(d => ({ ...d, name: e.target.value }))} placeholder="Name (e.g., Groceries)" />
+                  <input className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.name} onChange={(e) => setDraft(d => ({ ...d, name: e.target.value }))} placeholder="Name (e.g., Groceries)" />
                 </div>
                 <div className="col-span-12 md:col-span-4">
                   <label className="block text-xs mb-1">Amount</label>
-                  <input type="number" className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.amount} onChange={(e) => setDraft(d => ({ ...d, amount: e.target.value }))} placeholder="Amount" />
+                  <input type="number" className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.amount} onChange={(e) => setDraft(d => ({ ...d, amount: e.target.value }))} placeholder="Amount" />
                 </div>
                 <div className="col-span-12 md:col-span-2 md:pt-5 flex gap-2 md:justify-end">
-                  <button type="button" className="px-3 py-2 rounded border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 w-full md:w-auto" onClick={() => setMultiRows(rows => [...rows, { name: '', amount: '' }])}>+</button>
+                  <button type="button" className="px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 w-full md:w-auto" onClick={() => setMultiRows(rows => [...rows, { name: '', amount: '' }])}>+</button>
                 </div>
               </div>
               {multiRows.map((r, idx) => (
                 <div key={idx} className="md:col-span-2 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
                   <div className="col-span-12 md:col-span-6">
-                    <input className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.name} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, name: e.target.value } : it))} placeholder="Name (e.g., Groceries)" />
+                    <input className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.name} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, name: e.target.value } : it))} placeholder="Name (e.g., Groceries)" />
                   </div>
                   <div className="col-span-12 md:col-span-4">
-                    <input type="number" className="w-full bg-white border border-neutral-300 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.amount} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, amount: e.target.value } : it))} placeholder="Amount" />
+                    <input type="number" className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.amount} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, amount: e.target.value } : it))} placeholder="Amount" />
                   </div>
                   <div className="col-span-12 md:col-span-2 md:justify-end flex">
-                    <button className="px-2 py-2 rounded border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 w-full md:w-auto" onClick={() => setMultiRows(list => list.filter((_,i) => i!==idx))}>-</button>
+                    <button className="px-2 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 w-full md:w-auto" onClick={() => setMultiRows(list => list.filter((_,i) => i!==idx))}>-</button>
                   </div>
                 </div>
               ))}
@@ -308,7 +408,11 @@ const DataSetup: React.FC = () => {
                 }}>{editingId ? 'Save' : (multiRows.length > 0 ? 'Add all' : 'Add')}</button>
               </div>
             </div>
+            {/* Mobile helper text and CTA space */}
+            <div className="md:hidden text-xs text-neutral-500">Use the button to add entries.</div>
           </Section>
+          {/* Mobile floating Add entry button */}
+          <button className="md:hidden fixed bottom-4 right-4 px-4 py-3 rounded-full bg-primary-600 text-white shadow-lg" onClick={() => setMobileSheetOpen(true)}>Add entry</button>
         <div className="grid gap-4">
           {activeTab === 'INCOME' && (
             <Section title="Incomes">
@@ -409,6 +513,133 @@ const DataSetup: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile-friendly confirm modal */}
+      {confirmState?.open && (
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmState(null)}></div>
+          <div className="relative w-full sm:w-[420px] bg-white dark:bg-neutral-900 rounded-t-2xl sm:rounded-xl shadow-xl p-4 sm:p-5">
+            <h3 className="text-sm font-semibold mb-2">{confirmState.title}</h3>
+            <p className="text-sm text-neutral-600 dark:text-neutral-300 mb-4">{confirmState.message}</p>
+            <div className="flex justify-end gap-2">
+              <button className="px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-700" onClick={() => setConfirmState(null)}>Cancel</button>
+              <button className="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700" onClick={async () => { const fn = confirmState.onConfirm; setConfirmState(null); await fn(); }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Sheet for adding entries */}
+      {mobileSheetOpen && (
+        <div className="fixed inset-0 z-[1500]">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileSheetOpen(false)}></div>
+          <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-neutral-900 rounded-t-2xl shadow-2xl p-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-center">
+              <div className="h-1 w-16 bg-neutral-300 rounded-full mb-2"></div>
+            </div>
+            <h4 className="text-base font-semibold mb-2">Add entry</h4>
+            {error && <div className="text-sm text-red-400 mb-2">{error}</div>}
+            <div className="grid grid-cols-1 gap-3">
+              {/* Category (reuses custom dropdown) */}
+              <div>
+                <label className="block text-xs mb-1">Category</label>
+                <div className="flex gap-2" ref={categoryMenuRef}>
+                  <div className="relative flex-1">
+                    <button type="button" className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm text-left flex items-center justify-between hover:bg-neutral-50 dark:bg-neutral-800 dark:border-neutral-700" onClick={() => setCategoryMenuOpen(v => !v)}>
+                      <span>{(typeCategories[draft.type].find(c => c._id === draft.categoryId)?.name) || 'Select category'}</span>
+                      <svg className="w-4 h-4 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    {categoryMenuOpen && (
+                      <div className="absolute z-50 mt-1 w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg p-1 max-h-56 overflow-auto">
+                        {typeCategories[draft.type].map(c => (
+                          <div key={c._id} className="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                            <button type="button" className="text-sm text-left flex-1" onClick={() => { setDraft(d => ({ ...d, categoryId: c._id })); setCategoryMenuOpen(false); }}>{c.name}</button>
+                            <button type="button" className="ml-2 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30" onClick={(e) => { e.stopPropagation(); deleteCategory(c._id); setCategoryMenuOpen(false); }} title="Delete category">
+                              <svg className="w-4 h-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 002-2h2a2 2 0 002 2m-6 0h6"/></svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Tags */}
+              {draft.type === 'EXPENSE' && (
+                <div>
+                  <label className="block text-xs mb-1">Tags</label>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.values(EntryTags).map(t => (
+                      <button key={t} type="button" className={`px-2.5 py-1.5 rounded-full text-xs border transition-colors ${draft.tags.includes(t) ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`} onClick={() => setDraft(d => ({ ...d, tags: d.tags.includes(t) ? d.tags.filter(x => x !== t) : [...d.tags, t] }))}>{t.toLowerCase()}</button>
+                    ))}
+                  </div>
+                  {error && draft.type === 'EXPENSE' && draft.tags.length === 0 && (
+                    <div className="text-[11px] text-red-500 mt-1">At least one tag is required.</div>
+                  )}
+                </div>
+              )}
+              {/* Name & Amount and multi-row */}
+              <div className="grid grid-cols-1 gap-2 items-center">
+                <div>
+                  <label className="block text-xs mb-1">Name</label>
+                  <input className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.name} onChange={(e) => setDraft(d => ({ ...d, name: e.target.value }))} placeholder="Name (e.g., Groceries)" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1">Amount</label>
+                  <input type="number" className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={draft.amount} onChange={(e) => setDraft(d => ({ ...d, amount: e.target.value }))} placeholder="Amount" />
+                </div>
+                <div className="pt-1 flex gap-2 justify-end">
+                  <button type="button" className="px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200" onClick={() => setMultiRows(rows => [...rows, { name: '', amount: '' }])}>+</button>
+                </div>
+              </div>
+              {multiRows.map((r, idx) => (
+                <div key={`m-${idx}`} className="grid grid-cols-1 gap-2 items-center">
+                  <input className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.name} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, name: e.target.value } : it))} placeholder="Name (e.g., Groceries)" />
+                  <input type="number" className="w-full bg-white border border-neutral-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400 dark:bg-neutral-800 dark:border-neutral-700" value={r.amount} onChange={(e) => setMultiRows(list => list.map((it,i) => i===idx ? { ...it, amount: e.target.value } : it))} placeholder="Amount" />
+                  <div className="flex justify-end">
+                    <button className="px-2 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200" onClick={() => setMultiRows(list => list.filter((_,i) => i!==idx))}>-</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Advanced options */}
+            <div className="mt-3">
+              <button className="text-xs text-neutral-600 dark:text-neutral-300 underline" onClick={() => setMobileAdvanced(v => !v)}>{mobileAdvanced ? 'Hide advanced options' : 'Advanced options'}</button>
+            </div>
+            {mobileAdvanced && (
+              <div className="mt-3 grid grid-cols-1 gap-3">
+                {draft.type === 'EXPENSE' && (
+                  <div>
+                    <label className="block text-xs mb-1">Recurrence</label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['MONTHLY','QUARTERLY','YEARLY','ONE_TIME'] as EntryRecurrence[]).map(r => (
+                        <button key={r} type="button" className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${draft.recurrence === r ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`} onClick={() => setDraft(d => ({ ...d, recurrence: r }))}>{r === 'ONE_TIME' ? 'One time' : r.charAt(0) + r.slice(1).toLowerCase()}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {draft.type === 'EXPENSE' && (
+                  <div>
+                    <label className="block text-xs mb-1">Flexibility</label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['FIXED','FLEXIBLE','OPTIONAL'] as EntryFlexibility[]).map(f => (
+                        <button key={f} type="button" className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${draft.flexibility === f ? 'bg-primary-600 border-primary-500 text-white' : 'border-neutral-300 bg-neutral-50 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'}`} onClick={() => setDraft(d => ({ ...d, flexibility: f }))}>{f.charAt(0) + f.slice(1).toLowerCase()}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-4 flex gap-2">
+              <button className="flex-1 px-3 py-2 rounded-lg border border-neutral-300 bg-white hover:bg-neutral-100 dark:bg-neutral-800 dark:border-neutral-700" onClick={() => { setMobileSheetOpen(false); }}>Cancel</button>
+              <button className="flex-1 px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700" onClick={async () => { const v = validate(); if (v) { setError(v); return; } setError(null); if (multiRows.length > 0) { await bulkAdd(); } else { await submit(); } setMobileSheetOpen(false); setMobileAdvanced(false); }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </AppShell>
     </LayoutProvider>
   );
